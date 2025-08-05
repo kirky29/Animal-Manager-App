@@ -61,11 +61,15 @@ export const getAnimals = async (ownerId: string): Promise<Animal[]> => {
 }
 
 export const getAnimal = async (animalId: string): Promise<Animal | null> => {
+  console.log('getAnimal called with ID:', animalId)
   const docRef = doc(db, 'animals', animalId)
   const docSnap = await getDoc(docRef)
   
+  console.log('Document exists:', docSnap.exists())
+  
   if (docSnap.exists()) {
     const data = docSnap.data()
+    console.log('Animal data:', data)
     return {
       id: docSnap.id,
       ...data,
@@ -76,6 +80,7 @@ export const getAnimal = async (animalId: string): Promise<Animal | null> => {
     } as Animal
   }
   
+  console.log('Animal not found')
   return null
 }
 

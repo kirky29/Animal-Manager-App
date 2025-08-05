@@ -5,7 +5,7 @@ export interface Animal {
   breed?: string
   dateOfBirth: Date
   dateOfDeath?: Date
-  sex: 'male' | 'female'
+  sex: string
   color?: string
   markings?: string
   microchipNumber?: string
@@ -71,7 +71,7 @@ export interface AnimalFormData {
   breed?: string
   dateOfBirth: string
   dateOfDeath?: string
-  sex: 'male' | 'female'
+  sex: string
   color?: string
   markings?: string
   microchipNumber?: string

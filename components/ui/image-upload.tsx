@@ -3,8 +3,6 @@
 import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Upload, X, Image as ImageIcon } from 'lucide-react'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { storage } from '@/lib/firebase'
 
 interface ImageUploadProps {
   currentImageUrl?: string
@@ -37,53 +35,28 @@ export function ImageUpload({
       return
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image must be smaller than 5MB')
+    // Validate file size (max 2MB for base64 storage)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image must be smaller than 2MB for optimal performance')
       return
     }
 
     setUploading(true)
 
     try {
-      // Create a preview
+      // Convert file to base64 data URL - NO Firebase Storage!
       const reader = new FileReader()
       reader.onload = (e) => {
-        setPreviewUrl(e.target?.result as string)
+        const dataUrl = e.target?.result as string
+        setPreviewUrl(dataUrl)
+        onImageUpload(dataUrl) // Pass the base64 data URL directly
+        setUploading(false)
       }
       reader.readAsDataURL(file)
-
-      // Upload to Firebase Storage
-      const fileName = `${Date.now()}-${file.name}`
-      const storageRef = ref(storage, `animal-photos/${userId}/${animalId || 'temp'}/${fileName}`)
-      
-      // Add metadata to help with CORS
-      const metadata = {
-        contentType: file.type,
-        customMetadata: {
-          'uploaded-by': userId,
-          'animal-id': animalId || 'temp'
-        }
-      }
-      
-      const snapshot = await uploadBytes(storageRef, file, metadata)
-      const downloadURL = await getDownloadURL(snapshot.ref)
-      
-      onImageUpload(downloadURL)
     } catch (error) {
-      console.error('Error uploading image:', error)
-      
-      // Handle CORS errors specifically
-      if (error instanceof Error && error.message.includes('CORS')) {
-        alert('CORS error: Please check your Firebase Storage CORS configuration. Contact your administrator.')
-      } else if (error instanceof Error && error.message.includes('unauthorized')) {
-        alert('Authentication error: Please log in again.')
-      } else {
-        alert('Failed to upload image. Please try again.')
-      }
-      
+      console.error('Error processing image:', error)
+      alert('Failed to process image. Please try again.')
       setPreviewUrl(currentImageUrl || null)
-    } finally {
       setUploading(false)
     }
   }
@@ -171,12 +144,12 @@ export function ImageUpload({
           className="w-full"
         >
           <Upload className="h-4 w-4 mr-2" />
-          {uploading ? 'Uploading...' : 'Upload Image'}
+          {uploading ? 'Processing...' : 'Upload Image'}
         </Button>
         <p className="text-xs text-gray-500 mt-1">
-          JPG, PNG, GIF up to 5MB
+          JPG, PNG, GIF up to 2MB
         </p>
       </div>
     </div>
   )
-} 
+}

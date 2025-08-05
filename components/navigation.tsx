@@ -62,6 +62,12 @@ export function Navigation() {
               <Plus className="h-4 w-4" />
               <span>Add Animal</span>
             </Link>
+            <Link href="/debug" className="text-sm font-medium hover:text-primary">
+              Debug
+            </Link>
+            <Link href="/test-auth" className="text-sm font-medium hover:text-primary">
+              Test Auth
+            </Link>
             <div className="flex items-center space-x-2">
               <Button variant="ghost" size="sm" className="flex items-center space-x-1">
                 <User className="h-4 w-4" />
@@ -109,6 +115,20 @@ export function Navigation() {
               >
                 <Plus className="h-4 w-4" />
                 <span>Add Animal</span>
+              </Link>
+              <Link
+                href="/debug"
+                className="text-sm font-medium hover:text-primary"
+                onClick={() => setIsOpen(false)}
+              >
+                Debug
+              </Link>
+              <Link
+                href="/test-auth"
+                className="text-sm font-medium hover:text-primary"
+                onClick={() => setIsOpen(false)}
+              >
+                Test Auth
               </Link>
               <div className="pt-4 border-t">
                 <div className="flex items-center justify-between">

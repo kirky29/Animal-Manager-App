@@ -27,35 +27,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    console.log('Auth context useEffect running...')
+    
     // Only run on client side
     if (typeof window === 'undefined') {
+      console.log('Server side, setting loading to false')
       setLoading(false)
       return
     }
 
     // Add a timeout to prevent infinite loading
     const timeout = setTimeout(() => {
+      console.log('Auth timeout reached, setting loading to false')
       setLoading(false)
-    }, 3000)
+    }, 5000) // Increased timeout
 
     try {
+      console.log('Setting up Firebase auth listener...')
       const unsubscribe = onAuthStateChanged(auth, (user) => {
+        console.log('Auth state changed:', user ? 'User logged in' : 'No user')
         clearTimeout(timeout)
         setUser(user)
         setLoading(false)
       }, (error) => {
-        clearTimeout(timeout)
         console.error('Auth state change error:', error)
+        clearTimeout(timeout)
         setLoading(false)
       })
 
       return () => {
+        console.log('Cleaning up auth listener')
         clearTimeout(timeout)
         unsubscribe()
       }
     } catch (error) {
-      clearTimeout(timeout)
       console.error('Error setting up auth listener:', error)
+      clearTimeout(timeout)
       setLoading(false)
     }
   }, [])
@@ -85,7 +92,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
-          <p>Loading...</p>
+          <p>Loading Animal Manager...</p>
+          <p className="text-sm text-gray-500 mt-2">Initializing Firebase authentication...</p>
+          <button 
+            onClick={() => {
+              console.log('Force reload clicked')
+              window.location.reload()
+            }}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Reload if stuck
+          </button>
         </div>
       </div>
     )
