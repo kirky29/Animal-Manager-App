@@ -12,16 +12,8 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 }
 
-console.log('Firebase config loaded:', {
-  hasApiKey: !!firebaseConfig.apiKey,
-  hasAuthDomain: !!firebaseConfig.authDomain,
-  hasProjectId: !!firebaseConfig.projectId,
-  projectId: firebaseConfig.projectId
-})
-
 // Simple Firebase initialization
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
-console.log('Firebase app initialized')
 
 export const auth = getAuth(app)
 export const db = getFirestore(app)

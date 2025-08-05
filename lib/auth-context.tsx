@@ -27,25 +27,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    console.log('Auth context useEffect running...')
-    
     // Only run on client side
     if (typeof window === 'undefined') {
-      console.log('Server side, setting loading to false')
       setLoading(false)
       return
     }
 
     // Add a timeout to prevent infinite loading
     const timeout = setTimeout(() => {
-      console.log('Auth timeout reached, setting loading to false')
       setLoading(false)
-    }, 5000) // Increased timeout
+    }, 5000)
 
     try {
-      console.log('Setting up Firebase auth listener...')
       const unsubscribe = onAuthStateChanged(auth, (user) => {
-        console.log('Auth state changed:', user ? 'User logged in' : 'No user')
         clearTimeout(timeout)
         setUser(user)
         setLoading(false)
@@ -56,7 +50,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       })
 
       return () => {
-        console.log('Cleaning up auth listener')
         clearTimeout(timeout)
         unsubscribe()
       }
