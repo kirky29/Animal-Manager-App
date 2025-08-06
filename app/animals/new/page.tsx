@@ -441,13 +441,13 @@ export default function NewAnimalPage() {
         cleanedData.dateOfBirth = new Date().toISOString().split('T')[0]
       }
       
-      const animalId = await createAnimalWithAudit(
+      const { animalId, slug } = await createAnimalWithAudit(
         user.uid, 
         cleanedData,
         user.displayName || undefined,
         user.email || undefined
       )
-      router.push(`/animals/${animalId}`)
+      router.push(`/animals/${slug}`)
     } catch (error: any) {
       setError(error.message || 'Failed to create animal')
     } finally {

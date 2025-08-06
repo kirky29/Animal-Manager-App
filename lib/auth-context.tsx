@@ -42,10 +42,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('AuthProvider: Timeout reached, forcing loading to false')
       setLoading(false)
       setError('Authentication initialization timed out')
-    }, 10000) // Increased timeout to 10 seconds
+    }, 5000) // Reduced timeout to 5 seconds
 
     try {
       console.log('AuthProvider: Setting up auth state listener...')
+      
+      // Check if Firebase auth is available
+      if (!auth) {
+        console.error('AuthProvider: Firebase auth is not available')
+        clearTimeout(timeout)
+        setLoading(false)
+        setError('Firebase authentication is not available')
+        return
+      }
       
       const unsubscribe = onAuthStateChanged(auth, (user) => {
         console.log('AuthProvider: Auth state changed, user:', user ? 'logged in' : 'not logged in')
@@ -95,23 +104,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
-          <p>Loading Animal Manager...</p>
-          <p className="text-sm text-gray-500 mt-2">Initializing Firebase authentication...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
+        <div className="text-center bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-gray-200/50">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Loading Animal Manager...</h2>
+          <p className="text-sm text-gray-500 mb-4">Initializing Firebase authentication...</p>
           {error && (
-            <p className="text-sm text-red-500 mt-2">Error: {error}</p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-red-600">Error: {error}</p>
+            </div>
           )}
-          <button 
-            onClick={() => {
-              console.log('Force reload clicked')
-              window.location.reload()
-            }}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Reload if stuck
-          </button>
+          <div className="space-y-2">
+            <button 
+              onClick={() => {
+                console.log('Force reload clicked')
+                window.location.reload()
+              }}
+              className="px-6 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-medium"
+            >
+              Reload if stuck
+            </button>
+            <button 
+              onClick={() => {
+                console.log('Continue without auth clicked')
+                setLoading(false)
+                setError(null)
+              }}
+              className="block w-full px-6 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
+            >
+              Continue without authentication
+            </button>
+          </div>
         </div>
       </div>
     )

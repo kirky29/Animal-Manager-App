@@ -19,10 +19,18 @@ import {
   Heart,
   Clock,
   Eye,
-  Download
+  Download,
+  ArrowRight,
+  Users,
+  MapPin
 } from 'lucide-react'
 import { Animal, HealthUpdate, AnimalMedia, HealthUpdateMedia, AuditLog } from '@/types/animal'
 import { format, formatDistanceToNow } from 'date-fns'
+import { useAuth } from '@/lib/auth-context'
+import { getAnimals, getHealthUpdates, getAnimalMedia, getHealthUpdateMedia, getAuditLogs } from '@/lib/firestore'
+import Link from 'next/link'
+import { ImageWithFallback } from '@/components/ui/image-with-fallback'
+import { generateUniqueSlug } from '@/lib/utils'
 
 interface SearchResult {
   id: string
@@ -33,31 +41,92 @@ interface SearchResult {
   relevance: number
   data: Animal | HealthUpdate | AnimalMedia | HealthUpdateMedia | AuditLog
   matchedFields: string[]
+  animalId?: string
+  animalName?: string
 }
 
-interface AnimalSearchFilterProps {
-  animal: Animal
-  healthUpdates: HealthUpdate[]
-  media: (AnimalMedia | HealthUpdateMedia)[]
-  auditLogs: AuditLog[]
-  onResultClick: (result: SearchResult) => void
+interface DashboardSearchProps {
   className?: string
 }
 
-export function AnimalSearchFilter({ 
-  animal, 
-  healthUpdates, 
-  media, 
-  auditLogs, 
-  onResultClick,
-  className = '' 
-}: AnimalSearchFilterProps) {
+export function DashboardSearch({ className = '' }: DashboardSearchProps) {
+  const { user } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [showResults, setShowResults] = useState(false)
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set(['animal', 'health_update', 'media', 'audit_log']))
   const [dateRange, setDateRange] = useState<{ start?: Date; end?: Date }>({})
   const [selectedResultIndex, setSelectedResultIndex] = useState(-1)
+  const [allData, setAllData] = useState<{
+    animals: Animal[]
+    healthUpdates: HealthUpdate[]
+    media: (AnimalMedia | HealthUpdateMedia)[]
+    auditLogs: AuditLog[]
+  }>({
+    animals: [],
+    healthUpdates: [],
+    media: [],
+    auditLogs: []
+  })
+  const [loading, setLoading] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
+
+  // Fetch all data for the user
+  useEffect(() => {
+    const fetchAllData = async () => {
+      if (!user) return
+      
+      setLoading(true)
+      try {
+        // Get all animals for the user
+        const animals = await getAnimals(user.uid)
+        
+        // Get all related data for each animal
+        const allHealthUpdates: HealthUpdate[] = []
+        const allMedia: (AnimalMedia | HealthUpdateMedia)[] = []
+        const allAuditLogs: AuditLog[] = []
+
+        for (const animal of animals) {
+          // Get health updates
+          try {
+            const healthUpdates = await getHealthUpdates(animal.id)
+            allHealthUpdates.push(...healthUpdates)
+          } catch (error) {
+            console.error(`Error fetching health updates for animal ${animal.id}:`, error)
+          }
+
+          // Get media
+          try {
+            const animalMedia = await getAnimalMedia(animal.id)
+            const healthUpdateMedia = await getHealthUpdateMedia(animal.id)
+            allMedia.push(...animalMedia, ...healthUpdateMedia)
+          } catch (error) {
+            console.error(`Error fetching media for animal ${animal.id}:`, error)
+          }
+
+          // Get audit logs
+          try {
+            const auditLogs = await getAuditLogs(animal.id)
+            allAuditLogs.push(...auditLogs)
+          } catch (error) {
+            console.error(`Error fetching audit logs for animal ${animal.id}:`, error)
+          }
+        }
+
+        setAllData({
+          animals,
+          healthUpdates: allHealthUpdates,
+          media: allMedia,
+          auditLogs: allAuditLogs
+        })
+      } catch (error) {
+        console.error('Error fetching data for search:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAllData()
+  }, [user])
 
   // Search across all data
   const searchResults = useMemo(() => {
@@ -66,41 +135,45 @@ export function AnimalSearchFilter({
     const query = searchQuery.toLowerCase()
     const results: SearchResult[] = []
 
-    // Search animal profile data
+    // Search animals
     if (activeFilters.has('animal')) {
-      const animalFields = [
-        { field: 'name', value: animal.name },
-        { field: 'species', value: animal.species },
-        { field: 'breed', value: animal.breed },
-        { field: 'color', value: animal.color },
-        { field: 'markings', value: animal.markings },
-        { field: 'notes', value: animal.notes },
-        { field: 'microchip', value: animal.microchipNumber },
-        { field: 'registration', value: animal.registrationNumber },
-        { field: 'sex', value: animal.sex }
-      ].filter(f => f.value)
+      allData.animals.forEach(animal => {
+        const animalFields = [
+          { field: 'name', value: animal.name },
+          { field: 'species', value: animal.species },
+          { field: 'breed', value: animal.breed },
+          { field: 'color', value: animal.color },
+          { field: 'markings', value: animal.markings },
+          { field: 'notes', value: animal.notes },
+          { field: 'microchip', value: animal.microchipNumber },
+          { field: 'registration', value: animal.registrationNumber },
+          { field: 'sex', value: animal.sex }
+        ].filter(f => f.value)
 
-      const matchedFields = animalFields
-        .filter(f => f.value?.toLowerCase().includes(query))
-        .map(f => f.field)
+        const matchedFields = animalFields
+          .filter(f => f.value?.toLowerCase().includes(query))
+          .map(f => f.field)
 
-      if (matchedFields.length > 0) {
-        results.push({
-          id: `animal_${animal.id}`,
-          type: 'animal',
-          title: animal.name,
-          description: `${animal.species}${animal.breed ? ` - ${animal.breed}` : ''}`,
-          date: animal.createdAt,
-          relevance: matchedFields.includes('name') ? 10 : 5,
-          data: animal,
-          matchedFields
-        })
-      }
+        if (matchedFields.length > 0) {
+          results.push({
+            id: `animal_${animal.id}`,
+            type: 'animal',
+            title: animal.name,
+            description: `${animal.species}${animal.breed ? ` - ${animal.breed}` : ''}`,
+            date: animal.createdAt,
+            relevance: matchedFields.includes('name') ? 10 : 5,
+            data: animal,
+            matchedFields,
+            animalId: animal.id,
+            animalName: animal.name
+          })
+        }
+      })
     }
 
     // Search health updates
     if (activeFilters.has('health_update')) {
-      healthUpdates.forEach(update => {
+      allData.healthUpdates.forEach(update => {
         const updateFields = [
           { field: 'title', value: update.title },
           { field: 'description', value: update.description },
@@ -115,6 +188,9 @@ export function AnimalSearchFilter({
           .map(f => f.field)
 
         if (matchedFields.length > 0) {
+          // Find the animal for this health update
+          const animal = allData.animals.find(a => a.id === update.animalId)
+          
           results.push({
             id: `health_${update.id}`,
             type: 'health_update',
@@ -123,7 +199,9 @@ export function AnimalSearchFilter({
             date: update.date,
             relevance: matchedFields.includes('title') ? 8 : 6,
             data: update,
-            matchedFields
+            matchedFields,
+            animalId: update.animalId,
+            animalName: animal?.name
           })
         }
       })
@@ -131,7 +209,7 @@ export function AnimalSearchFilter({
 
     // Search media
     if (activeFilters.has('media')) {
-      media.forEach(item => {
+      allData.media.forEach(item => {
         const mediaFields = [
           { field: 'filename', value: item.fileName },
           { field: 'originalName', value: item.originalName },
@@ -145,6 +223,9 @@ export function AnimalSearchFilter({
           .map(f => f.field)
 
         if (matchedFields.length > 0) {
+          // Find the animal for this media
+          const animal = allData.animals.find(a => a.id === item.animalId)
+          
           results.push({
             id: `media_${item.id}`,
             type: 'media',
@@ -153,7 +234,9 @@ export function AnimalSearchFilter({
             date: item.uploadedAt,
             relevance: matchedFields.includes('caption') ? 7 : 5,
             data: item,
-            matchedFields
+            matchedFields,
+            animalId: item.animalId,
+            animalName: animal?.name
           })
         }
       })
@@ -161,7 +244,7 @@ export function AnimalSearchFilter({
 
     // Search audit logs
     if (activeFilters.has('audit_log')) {
-      auditLogs.forEach(log => {
+      allData.auditLogs.forEach(log => {
         const logFields = [
           { field: 'summary', value: log.summary },
           { field: 'userName', value: log.userName },
@@ -175,6 +258,9 @@ export function AnimalSearchFilter({
           .map(f => f.field)
 
         if (matchedFields.length > 0) {
+          // Find the animal for this audit log
+          const animal = allData.animals.find(a => a.id === log.animalId)
+          
           results.push({
             id: `audit_${log.id}`,
             type: 'audit_log',
@@ -183,7 +269,9 @@ export function AnimalSearchFilter({
             date: log.timestamp,
             relevance: matchedFields.includes('summary') ? 6 : 4,
             data: log,
-            matchedFields
+            matchedFields,
+            animalId: log.animalId,
+            animalName: animal?.name
           })
         }
       })
@@ -207,7 +295,7 @@ export function AnimalSearchFilter({
       }
       return b.date.getTime() - a.date.getTime()
     })
-  }, [searchQuery, healthUpdates, media, auditLogs, activeFilters, dateRange, animal])
+  }, [searchQuery, allData, activeFilters, dateRange])
 
   const toggleFilter = (filter: string) => {
     const newFilters = new Set(activeFilters)
@@ -244,7 +332,7 @@ export function AnimalSearchFilter({
       case 'Enter':
         e.preventDefault()
         if (selectedResultIndex >= 0 && selectedResultIndex < searchResults.length) {
-          onResultClick(searchResults[selectedResultIndex])
+          handleResultClick(searchResults[selectedResultIndex])
           setShowResults(false)
           setSelectedResultIndex(-1)
         }
@@ -253,6 +341,18 @@ export function AnimalSearchFilter({
         setShowResults(false)
         setSelectedResultIndex(-1)
         break
+    }
+  }
+
+  const handleResultClick = (result: SearchResult) => {
+    // Navigate to the appropriate page based on result type
+    if (result.animalId) {
+      const slug = generateUniqueSlug(result.animalName || 'animal', result.animalId)
+      if (result.type === 'animal') {
+        window.location.href = `/animals/${slug}`
+      } else {
+        window.location.href = `/animals/${slug}`
+      }
     }
   }
 
@@ -305,7 +405,7 @@ export function AnimalSearchFilter({
           </div>
           <Input
             type="text"
-            placeholder={`Search everything about ${animal.name}...`}
+            placeholder="Search across all your animals, health records, media, and activities..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value)
@@ -335,10 +435,10 @@ export function AnimalSearchFilter({
             <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">Filter by:</span>
           </div>
           {[
-            { key: 'animal', label: 'Profile', icon: <Heart className="h-4 w-4" />, gradient: 'from-emerald-500 to-emerald-600' },
-            { key: 'health_update', label: 'Health', icon: <Activity className="h-4 w-4" />, gradient: 'from-blue-500 to-blue-600' },
+            { key: 'animal', label: 'Animals', icon: <Heart className="h-4 w-4" />, gradient: 'from-emerald-500 to-emerald-600' },
+            { key: 'health_update', label: 'Health Records', icon: <Activity className="h-4 w-4" />, gradient: 'from-blue-500 to-blue-600' },
             { key: 'media', label: 'Media', icon: <Image className="h-4 w-4" />, gradient: 'from-purple-500 to-purple-600' },
-            { key: 'audit_log', label: 'Activity', icon: <Clock className="h-4 w-4" />, gradient: 'from-gray-500 to-gray-600' }
+            { key: 'audit_log', label: 'Activities', icon: <Clock className="h-4 w-4" />, gradient: 'from-gray-500 to-gray-600' }
           ].map(filter => (
             <Button
               key={filter.key}
@@ -361,6 +461,14 @@ export function AnimalSearchFilter({
             </Button>
           ))}
         </div>
+
+        {/* Loading indicator */}
+        {loading && (
+          <div className="flex items-center justify-center mt-4">
+            <div className="h-6 w-6 border-b-2 border-emerald-600 rounded-full animate-spin"></div>
+            <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">Loading your data...</span>
+          </div>
+        )}
       </div>
 
       {/* Ultra-Modern Search Results */}
@@ -402,7 +510,7 @@ export function AnimalSearchFilter({
                   <div
                     key={result.id}
                     onClick={() => {
-                      onResultClick(result)
+                      handleResultClick(result)
                       setShowResults(false)
                       setSelectedResultIndex(-1)
                     }}
@@ -418,9 +526,16 @@ export function AnimalSearchFilter({
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                            {result.title}
-                          </h4>
+                          <div className="flex items-center space-x-2">
+                            <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                              {result.title}
+                            </h4>
+                            {result.animalName && (
+                              <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+                                {result.animalName}
+                              </span>
+                            )}
+                          </div>
                           <span className="text-xs text-gray-500 dark:text-gray-400">
                             {formatDistanceToNow(result.date, { addSuffix: true })}
                           </span>
@@ -446,6 +561,7 @@ export function AnimalSearchFilter({
                           </div>
                         )}
                       </div>
+                      <ArrowRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
                     </div>
                   </div>
                 ))}

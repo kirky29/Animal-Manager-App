@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AnimalFormData, AnimalSpecies, getWeightUnits, getHeightUnits } from '@/types/animal'
-import { getAnimal, updateAnimalWithAudit } from '@/lib/firestore'
+import { getAnimalBySlug, updateAnimalWithAudit } from '@/lib/firestore'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { ImageUpload } from '@/components/ui/image-upload'
@@ -368,7 +368,7 @@ export default function EditAnimalPage() {
   const params = useParams()
   const router = useRouter()
   const { user } = useAuth()
-  const animalId = params.id as string
+  const slug = params.slug as string
 
   const [formData, setFormData] = useState<AnimalFormData>({
     name: '',
@@ -395,26 +395,23 @@ export default function EditAnimalPage() {
   const [customBreed, setCustomBreed] = useState('')
   const [customSpecies, setCustomSpecies] = useState('')
   const [originalProfilePicture, setOriginalProfilePicture] = useState<string>('')
+  const [animalId, setAnimalId] = useState<string>('')
 
   useEffect(() => {
     const loadAnimal = async () => {
-      if (!user || !animalId) {
+      if (!user || !slug) {
         router.push('/animals')
         return
       }
 
       try {
-        const animal = await getAnimal(animalId)
+        const animal = await getAnimalBySlug(slug, user.uid)
         if (!animal) {
           router.push('/animals')
           return
         }
 
-        // Check ownership
-        if (animal.ownerId !== user.uid) {
-          router.push('/animals')
-          return
-        }
+        setAnimalId(animal.id)
 
         // Convert to form data
         setFormData({
@@ -453,11 +450,11 @@ export default function EditAnimalPage() {
     }
 
     loadAnimal()
-  }, [user, animalId, router])
+  }, [user, slug, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user) return
+    if (!user || !animalId) return
 
     setSaving(true)
     setError('')
@@ -488,15 +485,25 @@ export default function EditAnimalPage() {
         }
       }
       
-      // Remove undefined values to prevent Firestore errors
+      // Remove undefined values and empty strings to prevent Firestore errors
       Object.keys(cleanedData).forEach(key => {
-        if (cleanedData[key as keyof typeof cleanedData] === undefined) {
+        const value = cleanedData[key as keyof typeof cleanedData]
+        if (value === undefined || value === '') {
           delete cleanedData[key as keyof typeof cleanedData]
         }
       })
       
-      if (!cleanedData.dateOfDeath) {
+      // Handle dateOfDeath specifically - only include if it has a value
+      if (!cleanedData.dateOfDeath || cleanedData.dateOfDeath === '') {
         delete cleanedData.dateOfDeath
+      }
+      
+      // Handle numeric fields - only include if they have valid values
+      if (cleanedData.weight === undefined || cleanedData.weight === null) {
+        delete cleanedData.weight
+      }
+      if (cleanedData.height === undefined || cleanedData.height === null) {
+        delete cleanedData.height
       }
       
       await updateAnimalWithAudit(
@@ -507,7 +514,7 @@ export default function EditAnimalPage() {
         user.email || undefined,
         originalProfilePicture
       )
-      router.push(`/animals/${animalId}`)
+      router.push(`/animals/${slug}`)
     } catch (error: any) {
       setError(error.message || 'Failed to update animal')
     } finally {
@@ -583,7 +590,7 @@ export default function EditAnimalPage() {
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Navigation */}
           <div className="flex items-center justify-between mb-8">
-            <Link href={`/animals/${animalId}`}>
+            <Link href={`/animals/${slug}`}>
               <Button variant="ghost" className="text-white/90 hover:text-white hover:bg-white/15 px-3 py-2 rounded-lg transition-all duration-200">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Profile
@@ -935,7 +942,7 @@ export default function EditAnimalPage() {
               >
                 {saving ? 'Saving...' : 'Save Changes'}
               </Button>
-              <Link href={`/animals/${animalId}`}>
+              <Link href={`/animals/${slug}`}>
                 <Button type="button" variant="outline" className="px-6 py-3">
                   Cancel
                 </Button>
@@ -947,4 +954,4 @@ export default function EditAnimalPage() {
     </div>
     </div>
   )
-}
+} 

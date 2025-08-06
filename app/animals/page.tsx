@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { Animal } from '@/types/animal'
 import { getAnimals } from '@/lib/firestore'
 import { formatDistanceToNow } from 'date-fns'
+import { generateUniqueSlug } from '@/lib/utils'
 
 export default function AnimalsPage() {
   const { user } = useAuth()
@@ -300,8 +301,10 @@ export default function AnimalsPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredAnimals.map((animal) => (
-            <Link key={animal.id} href={`/animals/${animal.id}`} className="block">
+          {filteredAnimals.map((animal) => {
+            const slug = generateUniqueSlug(animal.name, animal.id)
+            return (
+              <Link key={animal.id} href={`/animals/${slug}`} className="block">
               <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
                 <CardContent className="p-0">
                   {/* Image */}
@@ -349,7 +352,8 @@ export default function AnimalsPage() {
                 </CardContent>
               </Card>
             </Link>
-          ))}
+          )
+        })}
         </div>
       )}
     </div>

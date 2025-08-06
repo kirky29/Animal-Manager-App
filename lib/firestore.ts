@@ -84,6 +84,31 @@ export const getAnimal = async (animalId: string): Promise<Animal | null> => {
   return null
 }
 
+export const getAnimalBySlug = async (slug: string, ownerId: string): Promise<Animal | null> => {
+  console.log('getAnimalBySlug called with slug:', slug)
+  
+  // Extract ID from slug (format: name-id)
+  const idMatch = slug.match(/-([a-zA-Z0-9]+)$/)
+  if (!idMatch) {
+    console.log('No ID found in slug')
+    return null
+  }
+  
+  const animalId = idMatch[1]
+  console.log('Extracted animal ID:', animalId)
+  
+  // Get the animal by ID
+  const animal = await getAnimal(animalId)
+  
+  // Verify ownership
+  if (animal && animal.ownerId !== ownerId) {
+    console.log('Animal found but ownership mismatch')
+    return null
+  }
+  
+  return animal
+}
+
 export const updateAnimal = async (animalId: string, animalData: Partial<AnimalFormData>, oldProfilePicture?: string): Promise<void> => {
   const docRef = doc(db, 'animals', animalId)
   const updateData: any = {
@@ -413,6 +438,13 @@ export const updateAnimalWithAudit = async (
 
   // Create audit log entry
   if (changes.length > 0) {
+    // Clean the changes array to remove any undefined values
+    const cleanedChanges = changes.map(change => ({
+      field: change.field,
+      oldValue: change.oldValue === undefined ? null : change.oldValue,
+      newValue: change.newValue === undefined ? null : change.newValue
+    }))
+    
     await createAuditLog({
       animalId,
       action: 'updated',
@@ -422,7 +454,7 @@ export const updateAnimalWithAudit = async (
       userName,
       userEmail,
       timestamp: new Date(),
-      changes,
+      changes: cleanedChanges,
       summary: `Updated ${changes.map(c => c.field).join(', ')}`,
       metadata: {
         changesCount: changes.length
@@ -437,8 +469,12 @@ export const createAnimalWithAudit = async (
   animalData: AnimalFormData,
   userName?: string,
   userEmail?: string
-): Promise<string> => {
+): Promise<{ animalId: string; slug: string }> => {
   const animalId = await createAnimal(ownerId, animalData)
+  
+  // Generate slug for the animal
+  const { generateUniqueSlug } = await import('@/lib/utils')
+  const slug = generateUniqueSlug(animalData.name, animalId)
   
   // Create audit log entry
   await createAuditLog({
@@ -457,7 +493,7 @@ export const createAnimalWithAudit = async (
     }
   })
   
-  return animalId
+  return { animalId, slug }
 }
 
 // Media Management Functions
@@ -654,6 +690,49 @@ export const getAllAnimalMedia = async (animalId: string): Promise<(AnimalMedia 
     console.error('Error in getAllAnimalMedia:', error)
     // Return empty array instead of throwing error
     console.log('Returning empty media array due to error')
+    return []
+  }
+}
+
+export const getRecentActivityForUser = async (userId: string, limit: number = 5): Promise<any[]> => {
+  try {
+    // Get all animals for the user
+    const animals = await getAnimals(userId)
+    const allActivity: any[] = []
+
+    // Get audit logs and health updates for each animal
+    for (const animal of animals) {
+      // Get audit logs
+      const auditLogs = await getAuditLogs(animal.id)
+      auditLogs.forEach(log => {
+        allActivity.push({
+          ...log,
+          animalId: animal.id,
+          animalName: animal.name,
+          type: 'audit',
+          timestamp: log.timestamp
+        })
+      })
+
+      // Get health updates
+      const healthUpdates = await getHealthUpdates(animal.id)
+      healthUpdates.forEach(update => {
+        allActivity.push({
+          ...update,
+          animalId: animal.id,
+          animalName: animal.name,
+          type: 'health_update',
+          timestamp: update.createdAt
+        })
+      })
+    }
+
+    // Sort by timestamp (most recent first) and take the limit
+    return allActivity
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+      .slice(0, limit)
+  } catch (error) {
+    console.error('Error getting recent activity:', error)
     return []
   }
 }
