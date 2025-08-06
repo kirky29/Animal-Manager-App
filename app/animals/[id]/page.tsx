@@ -5,16 +5,17 @@ import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Edit, Trash2, Heart, Calendar, User, Tag, Plus, Activity, History, TrendingUp, Image } from 'lucide-react'
+import { ArrowLeft, Edit, Trash2, Heart, Calendar, User, Tag, Plus, Activity, History, TrendingUp, Image, Search } from 'lucide-react'
 import Link from 'next/link'
-import { Animal, HealthUpdate } from '@/types/animal'
-import { getAnimal, deleteAnimal } from '@/lib/firestore'
+import { Animal, HealthUpdate, AnimalMedia, HealthUpdateMedia, AuditLog } from '@/types/animal'
+import { getAnimal, deleteAnimal, getHealthUpdates, getAllAnimalMedia, getAuditLogs } from '@/lib/firestore'
 import { format, formatDistanceToNow } from 'date-fns'
 import { HealthUpdateForm } from '@/components/health-update-form'
 import { UnifiedActivityTimeline } from '@/components/unified-activity-timeline'
 import { WeightChart } from '@/components/weight-chart'
 import { RecentActivity } from '@/components/recent-activity'
 import { AnimalMediaTab } from '@/components/animal-media-tab'
+import { AnimalSearchFilter } from '@/components/animal-search-filter'
 
 export default function AnimalProfilePage() {
   const params = useParams()
@@ -29,6 +30,33 @@ export default function AnimalProfilePage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'weight' | 'media'>('overview')
   const [showHealthForm, setShowHealthForm] = useState(false)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
+  
+  // Search data state
+  const [healthUpdates, setHealthUpdates] = useState<HealthUpdate[]>([])
+  const [media, setMedia] = useState<(AnimalMedia | HealthUpdateMedia)[]>([])
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
+  const [searchDataLoading, setSearchDataLoading] = useState(false)
+
+  const loadSearchData = async () => {
+    if (!animalId) return
+    
+    setSearchDataLoading(true)
+    try {
+      const [healthData, mediaData, auditData] = await Promise.all([
+        getHealthUpdates(animalId),
+        getAllAnimalMedia(animalId),
+        getAuditLogs(animalId)
+      ])
+      
+      setHealthUpdates(healthData)
+      setMedia(mediaData)
+      setAuditLogs(auditData)
+    } catch (err) {
+      console.error('Error loading search data:', err)
+    } finally {
+      setSearchDataLoading(false)
+    }
+  }
 
   useEffect(() => {
     const loadAnimal = async () => {
@@ -55,6 +83,9 @@ export default function AnimalProfilePage() {
 
         setAnimal(animalData)
         setLoading(false)
+        
+        // Load search data after animal is loaded
+        loadSearchData()
       } catch (err) {
         console.error('Error loading animal:', err)
         setError('Failed to load animal data')
@@ -64,6 +95,13 @@ export default function AnimalProfilePage() {
 
     loadAnimal()
   }, [user, animalId])
+
+  // Refresh search data when refreshTrigger changes
+  useEffect(() => {
+    if (animal && refreshTrigger > 0) {
+      loadSearchData()
+    }
+  }, [refreshTrigger, animal])
 
   const handleDelete = async () => {
     if (!animal || !confirm(`Are you sure you want to delete ${animal.name}? This action cannot be undone.`)) {
@@ -117,19 +155,42 @@ export default function AnimalProfilePage() {
     )
   }
 
-  const handleHealthUpdateSuccess = (healthUpdate: HealthUpdate) => {
-    setShowHealthForm(false)
-    setRefreshTrigger(prev => prev + 1)
-    // Switch to activity timeline to show the new record
-    setActiveTab('activity')
-    // Optionally show a success message
-    console.log('Health update added successfully:', healthUpdate)
-  }
+
 
   const handleMediaDeleted = () => {
     // Refresh both the media tab and timeline when media is deleted
     setRefreshTrigger(prev => prev + 1)
+    // Refresh search data
+    loadSearchData()
     console.log('Media deleted, refreshing components')
+  }
+
+  const handleSearchResultClick = (result: any) => {
+    // Navigate to appropriate tab based on result type
+    switch (result.type) {
+      case 'health_update':
+        setActiveTab('activity')
+        break
+      case 'media':
+        setActiveTab('media')
+        break
+      case 'audit_log':
+        setActiveTab('activity')
+        break
+      default:
+        setActiveTab('overview')
+    }
+  }
+
+  const handleHealthUpdateSuccess = (healthUpdate: HealthUpdate) => {
+    setShowHealthForm(false)
+    setRefreshTrigger(prev => prev + 1)
+    // Refresh search data
+    loadSearchData()
+    // Switch to activity timeline to show the new record
+    setActiveTab('activity')
+    // Optionally show a success message
+    console.log('Health update added successfully:', healthUpdate)
   }
 
   const tabs = [
@@ -163,40 +224,59 @@ export default function AnimalProfilePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50/30 via-gray-50 to-green-50/20 dark:from-emerald-950/10 dark:via-gray-900 dark:to-green-950/10">
       {/* Navigation Bar */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between">
-            <Link href="/animals">
-              <Button variant="ghost" size="sm" className="text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Animals
-              </Button>
-            </Link>
-            <div className="flex items-center space-x-2">
+            {/* Left side - Navigation */}
+            <div className="flex items-center">
+              <Link href="/animals">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Animals
+                </Button>
+              </Link>
+            </div>
+
+            {/* Right side - Action buttons */}
+            <div className="flex items-center space-x-3">
+              {/* Primary action */}
               <Button 
                 onClick={() => setShowHealthForm(true)}
                 size="sm"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors"
               >
-                <Plus className="h-4 w-4 mr-1" />
+                <Plus className="h-4 w-4 mr-2" />
                 Add Health Update
               </Button>
-              <Link href={`/animals/${animal.id}/edit`}>
-                <Button variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-emerald-300 hover:text-emerald-600">
-                  <Edit className="h-4 w-4 mr-1" />
-                  Edit
+
+              {/* Secondary actions */}
+              <div className="flex items-center space-x-2">
+                <Link href={`/animals/${animal.id}/edit`}>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-emerald-300 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                </Link>
+                
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {deleting ? 'Deleting...' : 'Delete'}
                 </Button>
-              </Link>
-              <Button 
-                variant="destructive" 
-                size="sm"
-                onClick={handleDelete}
-                disabled={deleting}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                <Trash2 className="h-4 w-4 mr-1" />
-                {deleting ? 'Deleting...' : 'Delete'}
-              </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -204,6 +284,20 @@ export default function AnimalProfilePage() {
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+        {/* Search and Filter */}
+        {animal && (
+          <div className="mb-6">
+            <AnimalSearchFilter
+              animal={animal}
+              healthUpdates={healthUpdates}
+              media={media}
+              auditLogs={auditLogs}
+              onResultClick={handleSearchResultClick}
+              className="w-full"
+            />
+          </div>
+        )}
+        
         {/* Profile Header */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
           <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-6 lg:space-y-0 lg:space-x-8">
