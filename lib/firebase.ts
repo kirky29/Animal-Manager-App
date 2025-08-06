@@ -12,8 +12,37 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 }
 
-// Simple Firebase initialization
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
+// Validate Firebase configuration
+const validateConfig = () => {
+  const requiredFields = [
+    'apiKey',
+    'authDomain', 
+    'projectId',
+    'storageBucket',
+    'messagingSenderId',
+    'appId'
+  ]
+  
+  const missingFields = requiredFields.filter(field => !firebaseConfig[field as keyof typeof firebaseConfig])
+  
+  if (missingFields.length > 0) {
+    console.error('Firebase configuration missing required fields:', missingFields)
+    throw new Error(`Firebase configuration missing: ${missingFields.join(', ')}`)
+  }
+  
+  console.log('Firebase configuration validated successfully')
+}
+
+// Initialize Firebase with error handling
+let app
+try {
+  validateConfig()
+  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
+  console.log('Firebase app initialized successfully')
+} catch (error) {
+  console.error('Failed to initialize Firebase:', error)
+  throw error
+}
 
 export const auth = getAuth(app)
 export const db = getFirestore(app)

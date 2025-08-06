@@ -25,38 +25,51 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    console.log('AuthProvider: Starting initialization...')
+    
     // Only run on client side
     if (typeof window === 'undefined') {
+      console.log('AuthProvider: Server side, skipping auth initialization')
       setLoading(false)
       return
     }
 
     // Add a timeout to prevent infinite loading
     const timeout = setTimeout(() => {
+      console.log('AuthProvider: Timeout reached, forcing loading to false')
       setLoading(false)
-    }, 5000)
+      setError('Authentication initialization timed out')
+    }, 10000) // Increased timeout to 10 seconds
 
     try {
+      console.log('AuthProvider: Setting up auth state listener...')
+      
       const unsubscribe = onAuthStateChanged(auth, (user) => {
+        console.log('AuthProvider: Auth state changed, user:', user ? 'logged in' : 'not logged in')
         clearTimeout(timeout)
         setUser(user)
         setLoading(false)
+        setError(null)
       }, (error) => {
-        console.error('Auth state change error:', error)
+        console.error('AuthProvider: Auth state change error:', error)
         clearTimeout(timeout)
         setLoading(false)
+        setError(error.message)
       })
 
       return () => {
+        console.log('AuthProvider: Cleaning up auth listener')
         clearTimeout(timeout)
         unsubscribe()
       }
     } catch (error) {
-      console.error('Error setting up auth listener:', error)
+      console.error('AuthProvider: Error setting up auth listener:', error)
       clearTimeout(timeout)
       setLoading(false)
+      setError(error instanceof Error ? error.message : 'Unknown error')
     }
   }, [])
 
@@ -87,6 +100,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
           <p>Loading Animal Manager...</p>
           <p className="text-sm text-gray-500 mt-2">Initializing Firebase authentication...</p>
+          {error && (
+            <p className="text-sm text-red-500 mt-2">Error: {error}</p>
+          )}
           <button 
             onClick={() => {
               console.log('Force reload clicked')

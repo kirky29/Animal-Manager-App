@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AnimalFormData, AnimalSpecies } from '@/types/animal'
-import { createAnimal } from '@/lib/firestore'
+import { AnimalFormData, AnimalSpecies, getWeightUnits, getHeightUnits } from '@/types/animal'
+import { createAnimalWithAudit } from '@/lib/firestore'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { ImageUpload } from '@/components/ui/image-upload'
@@ -381,6 +381,10 @@ export default function NewAnimalPage() {
     registrationNumber: '',
     profilePicture: '',
     notes: '',
+    weight: undefined,
+    weightUnit: 'kg',
+    height: undefined,
+    heightUnit: 'cm',
   })
   
 
@@ -423,9 +427,11 @@ export default function NewAnimalPage() {
         }
       }
       
-      // Remove empty optional fields
+      // Remove empty optional fields and undefined values
       Object.keys(cleanedData).forEach(key => {
-        if (key !== 'name' && key !== 'species' && cleanedData[key as keyof AnimalFormData] === '') {
+        if (key !== 'name' && key !== 'species' && 
+            (cleanedData[key as keyof AnimalFormData] === '' || 
+             cleanedData[key as keyof AnimalFormData] === undefined)) {
           delete cleanedData[key as keyof AnimalFormData]
         }
       })
@@ -435,7 +441,12 @@ export default function NewAnimalPage() {
         cleanedData.dateOfBirth = new Date().toISOString().split('T')[0]
       }
       
-      const animalId = await createAnimal(user.uid, cleanedData)
+      const animalId = await createAnimalWithAudit(
+        user.uid, 
+        cleanedData,
+        user.displayName || undefined,
+        user.email || undefined
+      )
       router.push(`/animals/${animalId}`)
     } catch (error: any) {
       setError(error.message || 'Failed to create animal')
@@ -445,7 +456,7 @@ export default function NewAnimalPage() {
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
+    const { name, value, type } = e.target
     
     // Get the first sex option for the selected species
     const getDefaultSex = (species: string) => {
@@ -453,9 +464,20 @@ export default function NewAnimalPage() {
       return sexOptions[0]?.value || 'male'
     }
     
+    // Handle number inputs
+    let processedValue: string | number | undefined = value
+    if (type === 'number') {
+      if (value === '') {
+        processedValue = undefined
+      } else {
+        const numValue = parseFloat(value)
+        processedValue = isNaN(numValue) ? undefined : numValue
+      }
+    }
+    
     setFormData(prev => ({ 
       ...prev, 
-      [name]: value,
+      [name]: processedValue,
       // Reset breed and sex when species changes
       ...(name === 'species' ? { breed: '', sex: getDefaultSex(value) } : {})
     }))
@@ -509,7 +531,7 @@ export default function NewAnimalPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Card className="shadow-xl border-0 bg-white/90 backdrop-blur">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Animal Information</CardTitle>
@@ -518,7 +540,7 @@ export default function NewAnimalPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-8">
               {error && (
                 <div className="p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg">
                   {error}
@@ -526,12 +548,12 @@ export default function NewAnimalPage() {
               )}
 
               {/* Basic Information */}
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Basic Information</h3>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-6">Basic Information</h3>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label htmlFor="name" className="block text-sm font-medium mb-2">
                       Animal Name *
@@ -670,6 +692,71 @@ export default function NewAnimalPage() {
                     />
                   </div>
 
+                  {/* Weight and Height Fields */}
+                  <div className="col-span-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label htmlFor="weight" className="block text-sm font-medium mb-2">
+                          Weight
+                        </label>
+                        <div className="flex space-x-3">
+                          <input
+                            id="weight"
+                            name="weight"
+                            type="number"
+                            step="0.1"
+                            value={formData.weight || ''}
+                            onChange={handleInputChange}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Weight"
+                          />
+                          <select
+                            name="weightUnit"
+                            value={formData.weightUnit}
+                            onChange={handleInputChange}
+                            className="w-28 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                          >
+                            {getWeightUnits(formData.species).map(unit => (
+                              <option key={unit.value} value={unit.value}>
+                                {unit.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label htmlFor="height" className="block text-sm font-medium mb-2">
+                          Height
+                        </label>
+                        <div className="flex space-x-3">
+                          <input
+                            id="height"
+                            name="height"
+                            type="number"
+                            step="0.1"
+                            value={formData.height || ''}
+                            onChange={handleInputChange}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Height"
+                          />
+                          <select
+                            name="heightUnit"
+                            value={formData.heightUnit}
+                            onChange={handleInputChange}
+                            className="w-28 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                          >
+                            {getHeightUnits(formData.species).map(unit => (
+                              <option key={unit.value} value={unit.value}>
+                                {unit.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div>
                     <label htmlFor="microchipNumber" className="block text-sm font-medium mb-2">
                       Microchip Number
@@ -703,9 +790,9 @@ export default function NewAnimalPage() {
               </div>
 
               {/* Additional Information */}
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Additional Information</h3>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-6">Additional Information</h3>
                 </div>
 
                 <div>

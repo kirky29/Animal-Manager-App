@@ -57,25 +57,5 @@ service cloud.firestore {
         get(/databases/$(database)/documents/animals/$(request.resource.data.animalId)).data.ownerId == request.auth.uid;
       // Audit logs should not be updated or deleted by users
     }
-    
-    // Users can only access animal media for their own animals
-    match /animal_media/{mediaId} {
-      allow read, write: if request.auth != null && 
-        exists(/databases/$(database)/documents/animals/$(resource.data.animalId)) &&
-        get(/databases/$(database)/documents/animals/$(resource.data.animalId)).data.ownerId == request.auth.uid;
-      allow create: if request.auth != null && 
-        exists(/databases/$(database)/documents/animals/$(request.resource.data.animalId)) &&
-        get(/databases/$(database)/documents/animals/$(request.resource.data.animalId)).data.ownerId == request.auth.uid;
-    }
-    
-    // Users can only access health update media for their own animals
-    match /health_update_media/{mediaId} {
-      allow read, write: if request.auth != null && 
-        exists(/databases/$(database)/documents/animals/$(resource.data.animalId)) &&
-        get(/databases/$(database)/documents/animals/$(resource.data.animalId)).data.ownerId == request.auth.uid;
-      allow create: if request.auth != null && 
-        exists(/databases/$(database)/documents/animals/$(request.resource.data.animalId)) &&
-        get(/databases/$(database)/documents/animals/$(request.resource.data.animalId)).data.ownerId == request.auth.uid;
-    }
   }
-} 
+}

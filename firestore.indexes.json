@@ -1,0 +1,33 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "animal_media",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "animalId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "uploadedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "health_update_media",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "animalId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "uploadedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
