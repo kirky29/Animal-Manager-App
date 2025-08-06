@@ -76,10 +76,13 @@ export default function AnimalProfilePage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="text-center">
-          <Heart className="h-8 w-8 text-primary mx-auto mb-2 animate-pulse" />
-          <p>Loading animal profile...</p>
+      <div className="min-h-[60vh] bg-gradient-to-br from-emerald-50/30 via-gray-50 to-green-50/20 dark:from-emerald-950/10 dark:via-gray-900 dark:to-green-950/10 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-8 h-8 border-2 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto"></div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Loading Profile</h3>
+            <p className="text-gray-600 dark:text-gray-400">Getting animal information...</p>
+          </div>
         </div>
       </div>
     )
@@ -87,271 +90,207 @@ export default function AnimalProfilePage() {
 
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <Card>
-          <CardContent className="text-center py-12">
-            <h3 className="text-lg font-semibold mb-2 text-red-600">Error</h3>
-            <p className="text-muted-foreground mb-4">{error}</p>
-            <Link href="/animals">
-              <Button>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Animals
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50/30 via-gray-50 to-green-50/20 dark:from-emerald-950/10 dark:via-gray-900 dark:to-green-950/10">
+        <div className="max-w-4xl mx-auto p-6">
+          <Card className="bg-white dark:bg-gray-800 border border-red-200 dark:border-red-800 rounded-lg shadow-sm">
+            <CardContent className="text-center py-12">
+              <h3 className="text-lg font-semibold mb-2 text-red-600 dark:text-red-400">Error</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
+              <Link href="/animals">
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Animals
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }
 
   if (!animal) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <Card>
-          <CardContent className="text-center py-12">
-            <h3 className="text-lg font-semibold mb-2">Animal Not Found</h3>
-            <p className="text-muted-foreground mb-4">The requested animal could not be found.</p>
-            <Link href="/animals">
-              <Button>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Animals
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50/30 via-gray-50 to-green-50/20 dark:from-emerald-950/10 dark:via-gray-900 dark:to-green-950/10">
+        <div className="max-w-4xl mx-auto p-6">
+          <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+            <CardContent className="text-center py-12">
+              <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Animal Not Found</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">The requested animal could not be found.</p>
+              <Link href="/animals">
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Animals
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-        <div className="absolute inset-0 bg-black/20"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="flex items-center justify-between mb-8">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50/30 via-gray-50 to-green-50/20 dark:from-emerald-950/10 dark:via-gray-900 dark:to-green-950/10">
+      {/* Navigation Bar */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex items-center justify-between">
             <Link href="/animals">
-              <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+              <Button variant="ghost" size="sm" className="text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Animals
               </Button>
             </Link>
             <div className="flex items-center space-x-2">
               <Link href={`/animals/${animal.id}/edit`}>
-                <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-                  <Edit className="h-4 w-4 mr-2" />
+                <Button variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-emerald-300 hover:text-emerald-600">
+                  <Edit className="h-4 w-4 mr-1" />
                   Edit
                 </Button>
               </Link>
               <Button 
                 variant="destructive" 
+                size="sm"
                 onClick={handleDelete}
                 disabled={deleting}
                 className="bg-red-600 hover:bg-red-700"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className="h-4 w-4 mr-1" />
                 {deleting ? 'Deleting...' : 'Delete'}
               </Button>
-            </div>
-          </div>
-
-          <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-8 lg:space-y-0 lg:space-x-12">
-            {/* Profile Picture */}
-            <div className="flex-shrink-0">
-              {animal.profilePicture ? (
-                <img 
-                  src={animal.profilePicture} 
-                  alt={`${animal.name}'s profile picture`}
-                  className="w-48 h-48 lg:w-64 lg:h-64 rounded-2xl object-cover border-4 border-white/30 shadow-2xl"
-                />
-              ) : (
-                <div className="w-48 h-48 lg:w-64 lg:h-64 rounded-2xl bg-white/20 border-4 border-white/30 shadow-2xl flex items-center justify-center">
-                  <Heart className="h-24 w-24 text-white/60" />
-                </div>
-              )}
-            </div>
-
-            {/* Hero Content */}
-            <div className="flex-1 text-center lg:text-left">
-              <div className="flex items-center justify-center lg:justify-start space-x-2 mb-4">
-                <span className="px-3 py-1 bg-white/20 rounded-full text-sm font-medium capitalize">
-                  {animal.species.replace('-', ' ')}
-                </span>
-                {animal.breed && (
-                  <span className="px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
-                    {animal.breed}
-                  </span>
-                )}
-                {animal.dateOfDeath && (
-                  <span className="px-3 py-1 bg-red-500/80 rounded-full text-sm font-medium">
-                    Deceased
-                  </span>
-                )}
-              </div>
-              
-              <h1 className="text-4xl lg:text-6xl font-bold mb-4">{animal.name}</h1>
-              
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                <div className="flex items-center justify-center lg:justify-start space-x-2">
-                  <User className="h-4 w-4" />
-                  <span className="capitalize">{animal.sex}</span>
-                </div>
-                <div className="flex items-center justify-center lg:justify-start space-x-2">
-                  <Calendar className="h-4 w-4" />
-                  <span>{format(animal.dateOfBirth, 'MMM d, yyyy')}</span>
-                </div>
-                <div className="flex items-center justify-center lg:justify-start space-x-2">
-                  <Calendar className="h-4 w-4" />
-                  <span>{formatDistanceToNow(animal.dateOfBirth, { addSuffix: false })}</span>
-                </div>
-                {animal.color && (
-                  <div className="flex items-center justify-center lg:justify-start space-x-2">
-                    <Tag className="h-4 w-4" />
-                    <span>{animal.color}</span>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Basic Info */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Basic Information */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Heart className="h-5 w-5 text-red-500" />
-                  <span>Basic Information</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 gap-4">
-                  {animal.microchipNumber && (
-                    <div className="flex items-center space-x-3 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
-                      <Tag className="h-4 w-4 text-blue-600" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Microchip</p>
-                        <p className="text-sm text-gray-600">{animal.microchipNumber}</p>
-                      </div>
-                    </div>
-                  )}
-                  {animal.registrationNumber && (
-                    <div className="flex items-center space-x-3 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
-                      <Tag className="h-4 w-4 text-green-600" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Registration</p>
-                        <p className="text-sm text-gray-600">{animal.registrationNumber}</p>
-                      </div>
-                    </div>
-                  )}
-                  {animal.dateOfDeath && (
-                    <div className="flex items-center space-x-3 p-3 bg-gradient-to-r from-red-50 to-pink-50 rounded-lg">
-                      <Calendar className="h-4 w-4 text-red-600" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Date of Death</p>
-                        <p className="text-sm text-gray-600">{format(animal.dateOfDeath, 'MMMM d, yyyy')}</p>
-                      </div>
-                    </div>
-                  )}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+        {/* Profile Header */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
+          <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-6 lg:space-y-0 lg:space-x-8">
+            {/* Profile Image */}
+            <div className="flex-shrink-0">
+              {animal.profilePicture ? (
+                <img 
+                  src={animal.profilePicture} 
+                  alt={`${animal.name}'s profile picture`}
+                  className="w-48 h-48 sm:w-56 sm:h-56 lg:w-64 lg:h-64 rounded-2xl object-cover border-4 border-white dark:border-gray-700 shadow-lg"
+                />
+              ) : (
+                <div className="w-48 h-48 sm:w-56 sm:h-56 lg:w-64 lg:h-64 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-gray-700 dark:to-gray-600 border-4 border-white dark:border-gray-700 shadow-lg flex items-center justify-center">
+                  <Heart className="h-20 w-20 sm:h-24 sm:w-24 lg:h-32 lg:w-32 text-emerald-400 dark:text-gray-400" />
                 </div>
-              </CardContent>
-            </Card>
+              )}
+            </div>
 
-            {/* Age & Birth Info */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Calendar className="h-5 w-5 text-blue-500" />
-                  <span>Age & Birth</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="text-center p-6 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl">
-                    <p className="text-sm font-medium text-gray-600 mb-1">Current Age</p>
-                    <p className="text-3xl font-bold text-gray-800">
-                      {formatDistanceToNow(animal.dateOfBirth, { addSuffix: false })}
-                    </p>
-                  </div>
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm font-medium text-gray-600 mb-1">Born</p>
-                    <p className="text-lg font-semibold text-gray-800">
-                      {format(animal.dateOfBirth, 'MMMM d, yyyy')}
-                    </p>
-                  </div>
+            {/* Profile Info */}
+            <div className="flex-1 text-center lg:text-left">
+              <div className="flex items-center justify-center lg:justify-start flex-wrap gap-2 mb-3">
+                <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full text-sm font-medium">
+                  {animal.species.replace('-', ' ')}
+                </span>
+                {animal.breed && (
+                  <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium">
+                    {animal.breed}
+                  </span>
+                )}
+                {animal.dateOfDeath ? (
+                  <span className="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full text-sm font-medium">
+                    Deceased
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm font-medium">
+                    Active
+                  </span>
+                )}
+              </div>
+              
+              <h1 className="text-3xl lg:text-4xl font-bold mb-4 text-gray-900 dark:text-white">
+                {animal.name}
+              </h1>
+              
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Sex</p>
+                  <p className="font-medium text-gray-900 dark:text-white capitalize">{animal.sex}</p>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column - Additional Information */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Markings & Features */}
-            {animal.markings && (
-              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Tag className="h-5 w-5 text-purple-500" />
-                    <span>Markings & Distinctive Features</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
-                    <p className="text-gray-700 leading-relaxed">{animal.markings}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Notes */}
-            {animal.notes && (
-              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Edit className="h-5 w-5 text-green-500" />
-                    <span>Additional Notes</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl">
-                    <p className="text-gray-700 leading-relaxed">{animal.notes}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Quick Stats */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Heart className="h-5 w-5 text-pink-500" />
-                  <span>Quick Facts</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-gradient-to-br from-pink-100 to-rose-100 rounded-xl">
-                    <User className="h-6 w-6 text-pink-600 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-gray-600">Sex</p>
-                    <p className="text-lg font-semibold text-gray-800 capitalize">{animal.sex}</p>
-                  </div>
-                  {animal.color && (
-                    <div className="text-center p-4 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-xl">
-                      <Tag className="h-6 w-6 text-orange-600 mx-auto mb-2" />
-                      <p className="text-sm font-medium text-gray-600">Color</p>
-                      <p className="text-lg font-semibold text-gray-800">{animal.color}</p>
-                    </div>
-                  )}
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Age</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{formatDistanceToNow(animal.dateOfBirth, { addSuffix: false })}</p>
                 </div>
-              </CardContent>
-            </Card>
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Born</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{format(animal.dateOfBirth, 'MMM d, yyyy')}</p>
+                </div>
+                {animal.color && (
+                  <div>
+                    <p className="text-gray-500 dark:text-gray-400">Color</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{animal.color}</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Details Grid */}
+        {(animal.microchipNumber || animal.registrationNumber || animal.dateOfDeath) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Basic Information */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                <Tag className="h-5 w-5 text-emerald-600 mr-2" />
+                Information
+              </h3>
+              <div className="space-y-3">
+                {animal.microchipNumber && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Microchip</span>
+                    <span className="font-medium text-gray-900 dark:text-white font-mono text-sm">{animal.microchipNumber}</span>
+                  </div>
+                )}
+                {animal.registrationNumber && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Registration</span>
+                    <span className="font-medium text-gray-900 dark:text-white font-mono text-sm">{animal.registrationNumber}</span>
+                  </div>
+                )}
+                {animal.dateOfDeath && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Date of Death</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{format(animal.dateOfDeath, 'MMM d, yyyy')}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Additional Information */}
+        {(animal.markings || animal.notes) && (
+          <div className="mt-6 space-y-4">
+            {animal.markings && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                  <Tag className="h-5 w-5 text-teal-600 mr-2" />
+                  Markings & Features
+                </h3>
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{animal.markings}</p>
+              </div>
+            )}
+
+            {animal.notes && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                  <Edit className="h-5 w-5 text-green-600 mr-2" />
+                  Additional Notes
+                </h3>
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{animal.notes}</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

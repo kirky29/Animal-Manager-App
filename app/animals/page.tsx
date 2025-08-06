@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Plus, Search, Filter, PawPrint, Calendar, User, ArrowUpDown, SortAsc, SortDesc } from 'lucide-react'
+import { Plus, Search, Filter, PawPrint, Calendar, User, ArrowUpDown, SortAsc, SortDesc, Heart, Fish, Bird, Circle } from 'lucide-react'
 import Link from 'next/link'
 import { Animal } from '@/types/animal'
 import { getAnimals } from '@/lib/firestore'
@@ -24,21 +24,23 @@ export default function AnimalsPage() {
 
   // Function to get species-specific icon
   const getSpeciesIcon = (species: string) => {
+    const iconClass = "h-16 w-16 text-blue-400"
+    
     switch (species.toLowerCase()) {
-      case 'dog': return '🐕'
-      case 'cat': return '🐱'
-      case 'horse': return '🐴'
-      case 'cow': return '🐄'
-      case 'pig': return '🐷'
-      case 'goat': return '🐐'
-      case 'sheep': return '🐑'
-      case 'chicken': return '🐔'
-      case 'rabbit': return '🐰'
-      case 'llama': return '🦙'
-      case 'alpaca': return '🦙'
-      case 'ferret': return '🦦'
-      case 'parrot': return '🦜'
-      case 'bird-of-prey': return '🦅'
+      case 'dog': return <Heart className={iconClass} />
+      case 'cat': return <Heart className={iconClass} />
+      case 'horse': return <Circle className={iconClass} />
+      case 'cow': return <Circle className={iconClass} />
+      case 'pig': return <Circle className={iconClass} />
+      case 'goat': return <Circle className={iconClass} />
+      case 'sheep': return <Circle className={iconClass} />
+      case 'chicken': return <Bird className={iconClass} />
+      case 'rabbit': return <Circle className={iconClass} />
+      case 'llama': return <Circle className={iconClass} />
+      case 'alpaca': return <Circle className={iconClass} />
+      case 'ferret': return <Circle className={iconClass} />
+      case 'parrot': return <Bird className={iconClass} />
+      case 'bird-of-prey': return <Bird className={iconClass} />
       default: return null
     }
   }
@@ -299,56 +301,54 @@ export default function AnimalsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredAnimals.map((animal) => (
-            <Card key={animal.id} className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-0">
-                {/* Image */}
-                <div className="relative">
-                  {animal.profilePicture ? (
-                    <img 
-                      src={animal.profilePicture} 
-                      alt={`${animal.name}'s profile`}
-                      className="w-full h-48 object-cover rounded-t-lg"
-                    />
-                  ) : (
-                    <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 rounded-t-lg flex items-center justify-center">
-                      {getSpeciesIcon(animal.species) ? (
-                        <span className="text-6xl">{getSpeciesIcon(animal.species)}</span>
-                      ) : (
-                        <PawPrint className="h-16 w-16 text-blue-400" />
-                      )}
-                    </div>
-                  )}
-                  {animal.dateOfDeath && (
-                    <span className="absolute top-2 right-2 text-xs bg-red-500 text-white px-2 py-1 rounded">
-                      Deceased
-                    </span>
-                  )}
-                </div>
-                
-                {/* Content */}
-                <div className="p-4">
-                  <h3 className="font-bold text-lg mb-1">{animal.name}</h3>
-                  <p className="text-gray-600 mb-3 capitalize">
-                    {animal.species.replace('-', ' ')}
-                  </p>
-                  
-                  <div className="grid grid-cols-2 gap-2 text-sm text-gray-500 mb-4">
-                    <div className="flex items-center">
-                      <User className="h-3 w-3 mr-1" />
-                      <span className="capitalize">{animal.sex}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      <span>{formatDistanceToNow(animal.dateOfBirth)} old</span>
-                    </div>
+            <Link key={animal.id} href={`/animals/${animal.id}`} className="block">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
+                <CardContent className="p-0">
+                  {/* Image */}
+                  <div className="relative">
+                    {animal.profilePicture ? (
+                      <img 
+                        src={animal.profilePicture} 
+                        alt={`${animal.name}'s profile`}
+                        className="w-full h-48 object-cover rounded-t-lg group-hover:brightness-105 transition-all"
+                      />
+                    ) : (
+                      <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 rounded-t-lg flex items-center justify-center group-hover:brightness-105 transition-all">
+                        {getSpeciesIcon(animal.species) || <PawPrint className="h-16 w-16 text-blue-400" />}
+                      </div>
+                    )}
+                    {animal.dateOfDeath && (
+                      <span className="absolute top-2 right-2 text-xs bg-red-500 text-white px-2 py-1 rounded">
+                        Deceased
+                      </span>
+                    )}
                   </div>
                   
-                  <Link href={`/animals/${animal.id}`}>
-                    <Button className="w-full">View Profile</Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
+                  {/* Content */}
+                  <div className="p-4">
+                    <h3 className="font-bold text-lg mb-1 group-hover:text-blue-600 transition-colors">{animal.name}</h3>
+                    <p className="text-gray-600 mb-3 capitalize">
+                      {animal.species.replace('-', ' ')}
+                    </p>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-sm text-gray-500 mb-4">
+                      <div className="flex items-center">
+                        <User className="h-3 w-3 mr-1" />
+                        <span className="capitalize">{animal.sex}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        <span>{formatDistanceToNow(animal.dateOfBirth)} old</span>
+                      </div>
+                    </div>
+                    
+                    <div className="w-full bg-blue-600 text-white text-center py-2 px-4 rounded-lg group-hover:bg-blue-700 transition-colors">
+                      View Profile
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}
