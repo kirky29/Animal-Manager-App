@@ -257,7 +257,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-right">
                     <div className="text-3xl font-bold text-gray-900 dark:text-white">
-                      {new Set(animals.map(animal => animal.species)).size}
+                      {Array.from(new Set(animals.map(animal => animal.species))).length}
                     </div>
                     <div className="text-sm text-teal-600 dark:text-teal-400 font-medium">Species</div>
                   </div>
@@ -536,7 +536,6 @@ export default function DashboardPage() {
               </div>
             )
           )}
-        </div>
         </div>
       </div>
 
