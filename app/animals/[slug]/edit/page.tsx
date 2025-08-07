@@ -990,7 +990,5 @@ export default function EditAnimalPage() {
         </CardContent>
       </Card>
     </div>
-    </div>
   )
-} 
 } 
