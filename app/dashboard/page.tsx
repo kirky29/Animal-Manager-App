@@ -5,13 +5,13 @@ import { useAuth } from '@/lib/auth-context'
 import { ProtectedRoute } from '@/components/protected-route'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Plus, Heart, Calendar, Zap, TrendingUp, Users, Activity, Leaf, Flower2, TreePine, Sparkles, Sun, Moon, ArrowRight, Eye, Ruler, Weight } from 'lucide-react'
+import { Plus, Heart, Calendar, Zap, TrendingUp, Users, Activity, Leaf, Flower2, TreePine, Sparkles, Sun, Moon, ArrowRight, Eye, Ruler, Weight, Search, Filter, Grid3X3, List, ArrowUpDown, SortAsc, SortDesc, Tag } from 'lucide-react'
 import Link from 'next/link'
 import { Animal } from '@/types/animal'
 import { getAnimals, getRecentActivityForUser } from '@/lib/firestore'
 import { formatDistanceToNow } from 'date-fns'
 import { ImageWithFallback } from '@/components/ui/image-with-fallback'
-import { DashboardSearch } from '@/components/dashboard-search'
+
 import { generateUniqueSlug } from '@/lib/utils'
 
 export default function DashboardPage() {
@@ -19,6 +19,26 @@ export default function DashboardPage() {
   const [animals, setAnimals] = useState<Animal[]>([])
   const [recentActivity, setRecentActivity] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedSpecies, setSelectedSpecies] = useState('all')
+  const [selectedSex, setSelectedSex] = useState('all')
+  const [ageFilter, setAgeFilter] = useState('all')
+  const [deceasedFilter, setDeceasedFilter] = useState('living')
+  const [sortBy, setSortBy] = useState('name')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [filteredAnimals, setFilteredAnimals] = useState<Animal[]>([])
+
+  // Get unique values for filters
+  const uniqueSpecies = Array.from(new Set(animals.map(animal => animal.species)))
+  const uniqueSexes = Array.from(new Set(animals.map(animal => animal.sex)))
+
+  // Function to calculate age in days for filtering
+  const getAgeInDays = (birthDate: Date) => {
+    const today = new Date()
+    const diffTime = Math.abs(today.getTime() - birthDate.getTime())
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,6 +56,7 @@ export default function DashboardPage() {
           console.log('Fetched activity:', activity)
           
           setAnimals(userAnimals)
+          setFilteredAnimals(userAnimals)
           setRecentActivity(activity)
         } catch (error) {
           console.error('Error fetching data:', error)
@@ -47,6 +68,83 @@ export default function DashboardPage() {
 
     fetchData()
   }, [user])
+
+  // Filter and sort animals
+  useEffect(() => {
+    let filtered = animals
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(animal =>
+        animal.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        animal.species.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        animal.breed?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        animal.color?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+
+    // Filter by species
+    if (selectedSpecies !== 'all') {
+      filtered = filtered.filter(animal => animal.species === selectedSpecies)
+    }
+
+    // Filter by sex
+    if (selectedSex !== 'all') {
+      filtered = filtered.filter(animal => animal.sex === selectedSex)
+    }
+
+    // Filter by age
+    if (ageFilter !== 'all') {
+      filtered = filtered.filter(animal => {
+        const ageInDays = getAgeInDays(animal.dateOfBirth)
+        switch (ageFilter) {
+          case 'young': return ageInDays < 365
+          case 'adult': return ageInDays >= 365 && ageInDays < 2555
+          case 'senior': return ageInDays >= 2555
+          default: return true
+        }
+      })
+    }
+
+    // Filter by deceased status
+    if (deceasedFilter !== 'all') {
+      filtered = filtered.filter(animal => {
+        switch (deceasedFilter) {
+          case 'living': return !animal.dateOfDeath
+          case 'deceased': return !!animal.dateOfDeath
+          default: return true
+        }
+      })
+    }
+
+    // Sort animals
+    filtered.sort((a, b) => {
+      let comparison = 0
+      
+      switch (sortBy) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name)
+          break
+        case 'species':
+          comparison = a.species.localeCompare(b.species)
+          break
+        case 'age':
+          const ageA = getAgeInDays(a.dateOfBirth)
+          const ageB = getAgeInDays(b.dateOfBirth)
+          comparison = ageA - ageB
+          break
+        case 'created':
+          comparison = a.createdAt.getTime() - b.createdAt.getTime()
+          break
+        default:
+          comparison = 0
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison
+    })
+
+    setFilteredAnimals(filtered)
+  }, [animals, searchTerm, selectedSpecies, selectedSex, ageFilter, deceasedFilter, sortBy, sortOrder])
 
   if (loading) {
     return (
@@ -159,17 +257,145 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Comprehensive Search Section */}
-        <div className="mb-8">
-          <DashboardSearch />
-        </div>
+        {/* Search and Filter Section */}
+        <Card className="shadow-xl border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl mb-8">
+          <CardHeader className="border-b border-gray-200/50 dark:border-gray-700/50">
+            <CardTitle className="text-lg text-gray-900 dark:text-white">Search & Filter</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="space-y-6">
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search animals by name, species, breed, or color..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                />
+              </div>
+              
+              {/* Filters Row */}
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center space-x-2">
+                  <Filter className="h-4 w-4 text-gray-400" />
+                  <select
+                    value={selectedSpecies}
+                    onChange={(e) => setSelectedSpecies(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <option value="all">All Species</option>
+                    {uniqueSpecies.map(species => (
+                      <option key={species} value={species}>
+                        {species.charAt(0).toUpperCase() + species.slice(1).replace('-', ' ')}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-        {/* Recent Animals Section */}
+                <select
+                  value={selectedSex}
+                  onChange={(e) => setSelectedSex(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="all">All Sexes</option>
+                  {uniqueSexes.map(sex => (
+                    <option key={sex} value={sex}>
+                      {sex.charAt(0).toUpperCase() + sex.slice(1)}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={ageFilter}
+                  onChange={(e) => setAgeFilter(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="all">All Ages</option>
+                  <option value="young">Young (less than 1 year)</option>
+                  <option value="adult">Adult (1-7 years)</option>
+                  <option value="senior">Senior (7+ years)</option>
+                </select>
+
+                <select
+                  value={deceasedFilter}
+                  onChange={(e) => setDeceasedFilter(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="living">Living Only</option>
+                  <option value="deceased">Deceased Only</option>
+                  <option value="all">All Animals</option>
+                </select>
+
+                <div className="flex items-center space-x-2">
+                  <ArrowUpDown className="h-4 w-4 text-gray-400" />
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <option value="name">Sort by Name</option>
+                    <option value="species">Sort by Species</option>
+                    <option value="age">Sort by Age</option>
+                    <option value="created">Sort by Date Added</option>
+                  </select>
+                  <button
+                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                    className="p-2 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                  >
+                    {sortOrder === 'asc' ? (
+                      <SortAsc className="h-4 w-4" />
+                    ) : (
+                      <SortDesc className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+
+                {/* View Mode Toggle */}
+                <div className="flex items-center space-x-1 ml-auto">
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2 rounded-lg transition-colors ${
+                      viewMode === 'grid' 
+                        ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400' 
+                        : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    <Grid3X3 className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 rounded-lg transition-colors ${
+                      viewMode === 'list' 
+                        ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400' 
+                        : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    <List className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Filtered Animals Section */}
         <div className="bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl rounded-3xl border border-gray-200/50 dark:border-gray-700/50 p-8 shadow-2xl mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Featured Animals</h2>
-              <p className="text-gray-600 dark:text-gray-400">Your most recent and active animals</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {searchTerm || selectedSpecies !== 'all' || selectedSex !== 'all' || ageFilter !== 'all' || deceasedFilter !== 'living' 
+                  ? `Filtered Animals (${filteredAnimals.length}/${animals.length})`
+                  : 'Featured Animals'
+                }
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400">
+                {searchTerm || selectedSpecies !== 'all' || selectedSex !== 'all' || ageFilter !== 'all' || deceasedFilter !== 'living'
+                  ? `Showing ${filteredAnimals.length} of ${animals.length} animals`
+                  : 'Your most recent and active animals'
+                }
+              </p>
             </div>
             <div className="p-3 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl shadow-lg">
               <Heart className="h-6 w-6 text-white" />
@@ -192,12 +418,38 @@ export default function DashboardPage() {
                 </Button>
               </Link>
             </div>
+          ) : filteredAnimals.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800/40 dark:to-gray-700/40 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <Search className="h-10 w-10 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">No animals match your filters</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                Try adjusting your search terms or filters to see more results.
+              </p>
+              <Button 
+                onClick={() => {
+                  setSearchTerm('')
+                  setSelectedSpecies('all')
+                  setSelectedSex('all')
+                  setAgeFilter('all')
+                  setDeceasedFilter('living')
+                }}
+                className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+              >
+                Clear Filters
+              </Button>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {animals
-                .sort(() => Math.random() - 0.5)
-                .slice(0, 5)
-                .map((animal, index) => {
+            <div className={`grid gap-6 ${
+              viewMode === 'list' 
+                ? 'grid-cols-1' 
+                : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+            }`}>
+              {(searchTerm || selectedSpecies !== 'all' || selectedSex !== 'all' || ageFilter !== 'all' || deceasedFilter !== 'living' 
+                ? filteredAnimals 
+                : filteredAnimals.sort(() => Math.random() - 0.5).slice(0, 8)
+              ).map((animal, index) => {
                   const slug = generateUniqueSlug(animal.name, animal.id)
                   return (
                                          <Link
@@ -235,18 +487,34 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {animals.length > 5 && (
-            <div className="mt-8 text-center">
-              <Link href="/animals">
-                <Button 
-                  variant="outline" 
-                  className="border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors"
-                >
-                  View All Animals
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </Link>
-            </div>
+          {(searchTerm || selectedSpecies !== 'all' || selectedSex !== 'all' || ageFilter !== 'all' || deceasedFilter !== 'living') ? (
+            filteredAnimals.length > 0 && (
+              <div className="mt-8 text-center">
+                <Link href="/animals">
+                  <Button 
+                    variant="outline" 
+                    className="border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors"
+                  >
+                    View in Animals Page
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </Link>
+              </div>
+            )
+          ) : (
+            animals.length > 8 && (
+              <div className="mt-8 text-center">
+                <Link href="/animals">
+                  <Button 
+                    variant="outline" 
+                    className="border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors"
+                  >
+                    View All Animals
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </Link>
+              </div>
+            )
           )}
         </div>
 
