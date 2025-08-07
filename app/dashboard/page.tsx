@@ -199,208 +199,228 @@ export default function DashboardPage() {
       {/* Main Content */}
       <main className="w-full px-6 lg:px-8 pb-12">
         
-        {/* Stats Hero Section */}
-        <div className="bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl rounded-3xl border border-gray-200/50 dark:border-gray-700/50 p-8 mb-8 shadow-2xl">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Total Animals Card */}
-            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl rounded-2xl border border-gray-200/30 dark:border-gray-700/30 p-6 shadow-xl hover:shadow-2xl transition-all duration-300 group">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl shadow-lg">
-                  <Heart className="h-6 w-6 text-white" />
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white">{totalAnimals}</div>
-                  <div className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">Total Animals</div>
-                </div>
+        {/* Unified Dashboard Card */}
+        <div className="bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl rounded-3xl border border-gray-200/50 dark:border-gray-700/50 p-8 shadow-2xl">
+          
+          {/* Stats Section */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard Overview</h2>
+                <p className="text-gray-600 dark:text-gray-400">Your animal family at a glance</p>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">{livingAnimals} currently living</span>
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+              <div className="p-3 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl shadow-lg">
+                <Heart className="h-6 w-6 text-white" />
               </div>
             </div>
-
-            {/* Recently Added Card */}
-            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl rounded-2xl border border-gray-200/30 dark:border-gray-700/30 p-6 shadow-xl hover:shadow-2xl transition-all duration-300 group">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg">
-                  <TrendingUp className="h-6 w-6 text-white" />
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white">{recentlyAdded}</div>
-                  <div className="text-sm text-green-600 dark:text-green-400 font-medium">Recently Added</div>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">In the last 7 days</span>
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              </div>
-            </div>
-
-            {/* Species Card */}
-            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl rounded-2xl border border-gray-200/30 dark:border-gray-700/30 p-6 shadow-xl hover:shadow-2xl transition-all duration-300 group">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gradient-to-r from-teal-500 to-teal-600 rounded-xl shadow-lg">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {new Set(animals.map(animal => animal.species)).size}
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Total Animals Card */}
+              <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl rounded-2xl border border-gray-200/30 dark:border-gray-700/30 p-6 shadow-xl hover:shadow-2xl transition-all duration-300 group">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl shadow-lg">
+                    <Heart className="h-6 w-6 text-white" />
                   </div>
-                  <div className="text-sm text-teal-600 dark:text-teal-400 font-medium">Species</div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-gray-900 dark:text-white">{totalAnimals}</div>
+                    <div className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">Total Animals</div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{livingAnimals} currently living</span>
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Different species</span>
-                <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div>
+
+              {/* Recently Added Card */}
+              <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl rounded-2xl border border-gray-200/30 dark:border-gray-700/30 p-6 shadow-xl hover:shadow-2xl transition-all duration-300 group">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg">
+                    <TrendingUp className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-gray-900 dark:text-white">{recentlyAdded}</div>
+                    <div className="text-sm text-green-600 dark:text-green-400 font-medium">Recently Added</div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">In the last 7 days</span>
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                </div>
+              </div>
+
+              {/* Species Card */}
+              <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl rounded-2xl border border-gray-200/30 dark:border-gray-700/30 p-6 shadow-xl hover:shadow-2xl transition-all duration-300 group">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-r from-teal-500 to-teal-600 rounded-xl shadow-lg">
+                    <Users className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                      {new Set(animals.map(animal => animal.species)).size}
+                    </div>
+                    <div className="text-sm text-teal-600 dark:text-teal-400 font-medium">Species</div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Different species</span>
+                  <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Search and Filter Section */}
-        <Card className="shadow-xl border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl mb-8">
-          <CardHeader className="border-b border-gray-200/50 dark:border-gray-700/50">
-            <CardTitle className="text-lg text-gray-900 dark:text-white">Search & Filter</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="space-y-6">
-              {/* Search Bar */}
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search animals by name, species, breed, or color..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                />
+          {/* Search and Filter Section */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Search & Filter</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Find and organize your animals</p>
               </div>
-              
-              {/* Filters Row */}
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center space-x-2">
-                  <Filter className="h-4 w-4 text-gray-400" />
+              <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg">
+                <Search className="h-5 w-5 text-white" />
+              </div>
+            </div>
+            
+            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl rounded-2xl border border-gray-200/30 dark:border-gray-700/30 p-6">
+              <div className="space-y-6">
+                {/* Search Bar */}
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search animals by name, species, breed, or color..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  />
+                </div>
+                
+                {/* Filters Row */}
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Filter className="h-4 w-4 text-gray-400" />
+                    <select
+                      value={selectedSpecies}
+                      onChange={(e) => setSelectedSpecies(e.target.value)}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      <option value="all">All Species</option>
+                      {uniqueSpecies.map(species => (
+                        <option key={species} value={species}>
+                          {species.charAt(0).toUpperCase() + species.slice(1).replace('-', ' ')}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <select
-                    value={selectedSpecies}
-                    onChange={(e) => setSelectedSpecies(e.target.value)}
+                    value={selectedSex}
+                    onChange={(e) => setSelectedSex(e.target.value)}
                     className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
-                    <option value="all">All Species</option>
-                    {uniqueSpecies.map(species => (
-                      <option key={species} value={species}>
-                        {species.charAt(0).toUpperCase() + species.slice(1).replace('-', ' ')}
+                    <option value="all">All Sexes</option>
+                    {uniqueSexes.map(sex => (
+                      <option key={sex} value={sex}>
+                        {sex.charAt(0).toUpperCase() + sex.slice(1)}
                       </option>
                     ))}
                   </select>
-                </div>
 
-                <select
-                  value={selectedSex}
-                  onChange={(e) => setSelectedSex(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="all">All Sexes</option>
-                  {uniqueSexes.map(sex => (
-                    <option key={sex} value={sex}>
-                      {sex.charAt(0).toUpperCase() + sex.slice(1)}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={ageFilter}
-                  onChange={(e) => setAgeFilter(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="all">All Ages</option>
-                  <option value="young">Young (less than 1 year)</option>
-                  <option value="adult">Adult (1-7 years)</option>
-                  <option value="senior">Senior (7+ years)</option>
-                </select>
-
-                <select
-                  value={deceasedFilter}
-                  onChange={(e) => setDeceasedFilter(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="living">Living Only</option>
-                  <option value="deceased">Deceased Only</option>
-                  <option value="all">All Animals</option>
-                </select>
-
-                <div className="flex items-center space-x-2">
-                  <ArrowUpDown className="h-4 w-4 text-gray-400" />
                   <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
+                    value={ageFilter}
+                    onChange={(e) => setAgeFilter(e.target.value)}
                     className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
-                    <option value="name">Sort by Name</option>
-                    <option value="species">Sort by Species</option>
-                    <option value="age">Sort by Age</option>
-                    <option value="created">Sort by Date Added</option>
+                    <option value="all">All Ages</option>
+                    <option value="young">Young (less than 1 year)</option>
+                    <option value="adult">Adult (1-7 years)</option>
+                    <option value="senior">Senior (7+ years)</option>
                   </select>
-                  <button
-                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                    className="p-2 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-                  >
-                    {sortOrder === 'asc' ? (
-                      <SortAsc className="h-4 w-4" />
-                    ) : (
-                      <SortDesc className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
 
-                {/* View Mode Toggle */}
-                <div className="flex items-center space-x-1 ml-auto">
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded-lg transition-colors ${
-                      viewMode === 'grid' 
-                        ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400' 
-                        : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
-                    }`}
+                  <select
+                    value={deceasedFilter}
+                    onChange={(e) => setDeceasedFilter(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
-                    <Grid3X3 className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`p-2 rounded-lg transition-colors ${
-                      viewMode === 'list' 
-                        ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400' 
-                        : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
-                    }`}
-                  >
-                    <List className="h-4 w-4" />
-                  </button>
+                    <option value="living">Living Only</option>
+                    <option value="deceased">Deceased Only</option>
+                    <option value="all">All Animals</option>
+                  </select>
+
+                  <div className="flex items-center space-x-2">
+                    <ArrowUpDown className="h-4 w-4 text-gray-400" />
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      <option value="name">Sort by Name</option>
+                      <option value="species">Sort by Species</option>
+                      <option value="age">Sort by Age</option>
+                      <option value="created">Sort by Date Added</option>
+                    </select>
+                    <button
+                      onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                      className="p-2 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                    >
+                      {sortOrder === 'asc' ? (
+                        <SortAsc className="h-4 w-4" />
+                      ) : (
+                        <SortDesc className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+
+                  {/* View Mode Toggle */}
+                  <div className="flex items-center space-x-1 ml-auto">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`p-2 rounded-lg transition-colors ${
+                        viewMode === 'grid' 
+                          ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400' 
+                          : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      <Grid3X3 className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`p-2 rounded-lg transition-colors ${
+                        viewMode === 'list' 
+                          ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400' 
+                          : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      <List className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Filtered Animals Section */}
-        <div className="bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl rounded-3xl border border-gray-200/50 dark:border-gray-700/50 p-8 shadow-2xl mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {searchTerm || selectedSpecies !== 'all' || selectedSex !== 'all' || ageFilter !== 'all' || deceasedFilter !== 'living' 
-                  ? `Filtered Animals (${filteredAnimals.length}/${animals.length})`
-                  : 'Featured Animals'
-                }
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                {searchTerm || selectedSpecies !== 'all' || selectedSex !== 'all' || ageFilter !== 'all' || deceasedFilter !== 'living'
-                  ? `Showing ${filteredAnimals.length} of ${animals.length} animals`
-                  : 'Your most recent and active animals'
-                }
-              </p>
-            </div>
-            <div className="p-3 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl shadow-lg">
-              <Heart className="h-6 w-6 text-white" />
-            </div>
           </div>
+
+          {/* Animals Section */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {searchTerm || selectedSpecies !== 'all' || selectedSex !== 'all' || ageFilter !== 'all' || deceasedFilter !== 'living' 
+                    ? `Filtered Animals (${filteredAnimals.length}/${animals.length})`
+                    : 'Featured Animals'
+                  }
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {searchTerm || selectedSpecies !== 'all' || selectedSex !== 'all' || ageFilter !== 'all' || deceasedFilter !== 'living'
+                    ? `Showing ${filteredAnimals.length} of ${animals.length} animals`
+                    : 'Your most recent and active animals'
+                  }
+                </p>
+              </div>
+              <div className="p-2 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl shadow-lg">
+                <Users className="h-5 w-5 text-white" />
+              </div>
+            </div>
 
           {animals.length === 0 ? (
             <div className="text-center py-12">
@@ -517,9 +537,11 @@ export default function DashboardPage() {
             )
           )}
         </div>
+        </div>
+      </div>
 
-        {/* Recent Activity Section */}
-        <div className="bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl rounded-3xl border border-gray-200/50 dark:border-gray-700/50 p-8 shadow-2xl">
+      {/* Recent Activity Section */}
+      <div className="bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl rounded-3xl border border-gray-200/50 dark:border-gray-700/50 p-8 shadow-2xl">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Recent Activity</h2>
@@ -604,6 +626,7 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+      </div>
       </main>
     </div>
     </ProtectedRoute>
