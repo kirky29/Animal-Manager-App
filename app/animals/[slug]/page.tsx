@@ -5,96 +5,94 @@ import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Edit, Trash2, Heart, Calendar, User, Tag, Plus, Activity, History, TrendingUp, Image, Search, Eye, Weight, Ruler } from 'lucide-react'
+import { 
+  ArrowLeft, 
+  Edit, 
+  Trash2, 
+  Heart, 
+  Calendar, 
+  Weight, 
+  Ruler, 
+  FileText, 
+  MapPin, 
+  Tag, 
+  User, 
+  Clock,
+  TrendingUp,
+  Activity,
+  AlertCircle,
+  CheckCircle,
+  Star
+} from 'lucide-react'
 import Link from 'next/link'
-import { Animal, HealthUpdate, AnimalMedia, HealthUpdateMedia, AuditLog } from '@/types/animal'
-import { getAnimalBySlug, deleteAnimal, getHealthUpdates, getAllAnimalMedia, getAuditLogs } from '@/lib/firestore'
-import { format, formatDistanceToNow } from 'date-fns'
-import { HealthUpdateForm } from '@/components/health-update-form'
-import { UnifiedActivityTimeline } from '@/components/unified-activity-timeline'
-import { WeightChart } from '@/components/weight-chart'
-import { RecentActivity } from '@/components/recent-activity'
-import { AnimalMediaTab } from '@/components/animal-media-tab'
-import { AnimalSearchFilter } from '@/components/animal-search-filter'
+import { Animal, WeightRecord, HeightRecord, MedicalRecord } from '@/types/animal'
+import { getAnimalBySlug, getWeightRecords, getHeightRecords, getMedicalRecords, deleteAnimal } from '@/lib/firestore'
+import { format, formatDistanceToNow, differenceInDays, differenceInMonths, differenceInYears } from 'date-fns'
+import { ImageWithFallback } from '@/components/ui/image-with-fallback'
 
-export default function AnimalProfilePage() {
+export default function AnimalDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { user } = useAuth()
   const slug = params.slug as string
 
   const [animal, setAnimal] = useState<Animal | null>(null)
+  const [weightRecords, setWeightRecords] = useState<WeightRecord[]>([])
+  const [heightRecords, setHeightRecords] = useState<HeightRecord[]>([])
+  const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
-  const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'weight' | 'media'>('overview')
-  const [showHealthForm, setShowHealthForm] = useState(false)
-  const [refreshTrigger, setRefreshTrigger] = useState(0)
-  
-  // Search data state
-  const [healthUpdates, setHealthUpdates] = useState<HealthUpdate[]>([])
-  const [media, setMedia] = useState<(AnimalMedia | HealthUpdateMedia)[]>([])
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
-  const [searchDataLoading, setSearchDataLoading] = useState(false)
-
-  const loadSearchData = async () => {
-    if (!animal) return
-    
-    setSearchDataLoading(true)
-    try {
-      const [healthData, mediaData, auditData] = await Promise.all([
-        getHealthUpdates(animal.id),
-        getAllAnimalMedia(animal.id),
-        getAuditLogs(animal.id)
-      ])
-      
-      setHealthUpdates(healthData)
-      setMedia(mediaData)
-      setAuditLogs(auditData)
-    } catch (err) {
-      console.error('Error loading search data:', err)
-    } finally {
-      setSearchDataLoading(false)
-    }
-  }
 
   useEffect(() => {
-    const loadAnimal = async () => {
-      if (!user || !slug) {
-        setLoading(false)
-        return
-      }
-
+    const fetchData = async () => {
+      console.log('Fetching animal data for slug:', slug)
+      console.log('Current user:', user?.uid)
+      
       try {
-        const animalData = await getAnimalBySlug(slug, user.uid)
-        
+        const animalData = await getAnimalBySlug(slug, user?.uid || '')
+
+        console.log('Animal data fetched:', animalData)
+
         if (!animalData) {
-          setError('Animal not found')
-          setLoading(false)
+          console.log('No animal found, redirecting to /animals')
+          router.push('/animals')
+          return
+        }
+
+        // Check if the animal belongs to the current user
+        if (animalData.ownerId !== user?.uid) {
+          console.log('Animal does not belong to user, redirecting to /animals')
+          router.push('/animals')
           return
         }
 
         setAnimal(animalData)
-        setLoading(false)
-        
-        // Load search data after animal is loaded
-        loadSearchData()
-      } catch (err) {
-        console.error('Error loading animal:', err)
-        setError('Failed to load animal data')
+
+        // Fetch related data
+        const [weights, heights, medical] = await Promise.all([
+          getWeightRecords(animalData.id),
+          getHeightRecords(animalData.id),
+          getMedicalRecords(animalData.id)
+        ])
+
+        setWeightRecords(weights)
+        setHeightRecords(heights)
+        setMedicalRecords(medical)
+      } catch (error) {
+        console.error('Error fetching animal data:', error)
+        router.push('/animals')
+      } finally {
         setLoading(false)
       }
     }
 
-    loadAnimal()
-  }, [user, slug])
-
-  // Refresh search data when refreshTrigger changes
-  useEffect(() => {
-    if (animal && refreshTrigger > 0) {
-      loadSearchData()
+    if (user && slug) {
+      fetchData()
+    } else {
+      console.log('No user or slug, setting loading to false')
+      setLoading(false)
     }
-  }, [refreshTrigger, animal])
+  }, [user, slug, router])
 
   const handleDelete = async () => {
     if (!animal || !confirm(`Are you sure you want to delete ${animal.name}? This action cannot be undone.`)) {
@@ -113,494 +111,434 @@ export default function AnimalProfilePage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-[60vh] bg-gradient-to-br from-emerald-50/30 via-gray-50 to-green-50/20 dark:from-emerald-950/10 dark:via-gray-900 dark:to-green-950/10 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-8 h-8 border-2 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto"></div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Loading Profile</h3>
-            <p className="text-gray-600 dark:text-gray-400">Getting animal information...</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const getAgeDetails = (birthDate: Date) => {
+    const years = differenceInYears(new Date(), birthDate)
+    const months = differenceInMonths(new Date(), birthDate) % 12
+    const days = differenceInDays(new Date(), birthDate) % 30
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50/30 via-gray-50 to-green-50/20 dark:from-emerald-950/10 dark:via-gray-900 dark:to-green-950/10">
-        <div className="max-w-4xl mx-auto p-6">
-          <Card className="bg-white dark:bg-gray-800 border border-red-200 dark:border-red-800 rounded-lg shadow-sm">
-            <CardContent className="text-center py-12">
-              <h3 className="text-lg font-semibold mb-2 text-red-600 dark:text-red-400">Error</h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
-              <Link href="/animals">
-                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Animals
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    )
-  }
-
-  const handleMediaDeleted = () => {
-    // Refresh both the media tab and timeline when media is deleted
-    setRefreshTrigger(prev => prev + 1)
-    // Refresh search data
-    loadSearchData()
-    console.log('Media deleted, refreshing components')
-  }
-
-  const handleSearchResultClick = (result: any) => {
-    // Navigate to appropriate tab based on result type
-    switch (result.type) {
-      case 'health_update':
-        setActiveTab('activity')
-        break
-      case 'media':
-        setActiveTab('media')
-        break
-      case 'audit_log':
-        setActiveTab('activity')
-        break
-      default:
-        setActiveTab('overview')
+    if (years > 0) {
+      return `${years} year${years !== 1 ? 's' : ''}${months > 0 ? `, ${months} month${months !== 1 ? 's' : ''}` : ''}`
+    } else if (months > 0) {
+      return `${months} month${months !== 1 ? 's' : ''}${days > 0 ? `, ${days} day${days !== 1 ? 's' : ''}` : ''}`
+    } else {
+      return `${days} day${days !== 1 ? 's' : ''}`
     }
   }
 
-  const handleHealthUpdateSuccess = (healthUpdate: HealthUpdate) => {
-    setShowHealthForm(false)
-    setRefreshTrigger(prev => prev + 1)
-    // Refresh search data
-    loadSearchData()
-    // Switch to activity timeline to show the new record
-    setActiveTab('activity')
-    // Optionally show a success message
-    console.log('Health update added successfully:', healthUpdate)
+  const getLatestWeight = () => {
+    if (weightRecords.length === 0) return null
+    return weightRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
   }
 
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: <Heart className="h-4 w-4" /> },
-    { id: 'activity', label: 'Activity Timeline', icon: <Activity className="h-4 w-4" /> },
-    { id: 'weight', label: 'Weight Tracking', icon: <TrendingUp className="h-4 w-4" /> },
-    { id: 'media', label: 'Media', icon: <Image className="h-4 w-4" /> },
-  ] as const
+  const getLatestHeight = () => {
+    if (heightRecords.length === 0) return null
+    return heightRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+  }
 
-  if (!animal) {
+  const getRecentMedicalRecords = () => {
+    return medicalRecords
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5)
+  }
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50/30 via-gray-50 to-green-50/20 dark:from-emerald-950/10 dark:via-gray-900 dark:to-green-950/10">
-        <div className="max-w-4xl mx-auto p-6">
-          <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
-            <CardContent className="text-center py-12">
-              <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Animal Not Found</h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">The requested animal could not be found.</p>
-              <Link href="/animals">
-                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Animals
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Heart className="h-8 w-8 text-primary mx-auto mb-2 animate-pulse" />
+          <p>Loading animal details...</p>
         </div>
       </div>
     )
   }
 
+  if (!animal) {
+    return null
+  }
+
+  const latestWeight = getLatestWeight()
+  const latestHeight = getLatestHeight()
+  const recentMedical = getRecentMedicalRecords()
+
   return (
-    <div className="min-h-screen w-full bg-white dark:bg-gray-900">
-      {/* Modern Header */}
-      <header className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-40">
-        <div className="w-full px-6 lg:px-8">
-          {/* Navigation */}
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link href="/animals" className="group">
-                <div className="flex items-center space-x-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all duration-200">
-                  <ArrowLeft className="h-4 w-4 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Back</span>
-                </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      {/* Hero Section */}
+      <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex items-center justify-between mb-8">
+            <Link href="/animals">
+              <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Animals
+              </Button>
+            </Link>
+            <div className="flex items-center space-x-2">
+              <Link href={`/animals/${slug}/edit`}>
+                <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
               </Link>
-              <div className="h-6 w-px bg-gray-200 dark:bg-gray-700"></div>
-              <div className="flex items-center space-x-2">
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{animal.name}</h1>
+              <Button 
+                variant="destructive" 
+                onClick={handleDelete}
+                disabled={deleting}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                {deleting ? 'Deleting...' : 'Delete'}
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-8 lg:space-y-0 lg:space-x-12">
+            {/* Profile Picture */}
+            <div className="flex-shrink-0">
+              <ImageWithFallback
+                src={animal.profilePicture}
+                alt={`${animal.name}'s profile picture`}
+                containerClassName="w-48 h-48 lg:w-64 lg:h-64 rounded-2xl overflow-hidden border-4 border-white/30 shadow-2xl"
+                fallbackIcon={<Heart className="h-24 w-24 text-white/60" />}
+                fallbackClassName="w-48 h-48 lg:w-64 lg:h-64 rounded-2xl bg-white/20 border-4 border-white/30 shadow-2xl flex items-center justify-center"
+              />
+            </div>
+
+            {/* Hero Content */}
+            <div className="flex-1 text-center lg:text-left">
+              <div className="flex items-center justify-center lg:justify-start space-x-2 mb-4">
+                <span className="px-3 py-1 bg-white/20 rounded-full text-sm font-medium capitalize">
+                  {animal.species.replace('-', ' ')}
+                </span>
+                {animal.breed && (
+                  <span className="px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
+                    {animal.breed}
+                  </span>
+                )}
                 {animal.dateOfDeath && (
-                  <span className="text-sm px-2 py-1 bg-red-500/20 text-red-700 dark:text-red-300 rounded-lg font-medium">
-                    ✝ Deceased
+                  <span className="px-3 py-1 bg-red-500/80 rounded-full text-sm font-medium">
+                    Deceased
                   </span>
                 )}
               </div>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <Button 
-                onClick={() => setShowHealthForm(true)}
-                className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-4 py-2 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Update
-              </Button>
-
-              <div className="flex items-center space-x-2">
-                <Link href={`/animals/${slug}/edit`}>
-                  <Button 
-                    variant="outline" 
-                    className="border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-xl font-medium transition-all duration-200"
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                </Link>
-                
-                <Button 
-                  variant="outline"
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  className="border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-700 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 rounded-xl font-medium disabled:opacity-50 transition-all duration-200"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  {deleting ? 'Deleting...' : 'Delete'}
-                </Button>
+              
+              <h1 className="text-4xl lg:text-6xl font-bold mb-4">{animal.name}</h1>
+              
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                <div className="flex items-center justify-center lg:justify-start space-x-2">
+                  <User className="h-4 w-4" />
+                  <span className="capitalize">{animal.sex}</span>
+                </div>
+                <div className="flex items-center justify-center lg:justify-start space-x-2">
+                  <Calendar className="h-4 w-4" />
+                  <span>{format(animal.dateOfBirth, 'MMM d, yyyy')}</span>
+                </div>
+                <div className="flex items-center justify-center lg:justify-start space-x-2">
+                  <Clock className="h-4 w-4" />
+                  <span>{getAgeDetails(animal.dateOfBirth)}</span>
+                </div>
+                {animal.color && (
+                  <div className="flex items-center justify-center lg:justify-start space-x-2">
+                    <Tag className="h-4 w-4" />
+                    <span>{animal.color}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
-      </header>
-
-      {/* Hero Section with Search */}
-      <section className="bg-white py-8">
-        <div className="w-full px-6 lg:px-8">
-          {animal && (
-            <AnimalSearchFilter
-              animal={animal}
-              healthUpdates={healthUpdates}
-              media={media}
-              auditLogs={auditLogs}
-              onResultClick={handleSearchResultClick}
-              className="w-full"
-            />
-          )}
-        </div>
-      </section>
+      </div>
 
       {/* Main Content */}
-      <main className="w-full px-6 lg:px-8 pb-12">
-        
-        {/* Profile Hero Card */}
-        <div className={`${
-          animal.dateOfDeath 
-            ? 'bg-gray-100/60 dark:bg-gray-800/60 border-gray-300/50 dark:border-gray-600/50' 
-            : 'bg-white/40 dark:bg-gray-900/40 border-gray-200/50 dark:border-gray-700/50'
-        } backdrop-blur-xl rounded-3xl border p-8 mb-8 shadow-2xl`}>
-          <div className="flex flex-col xl:flex-row items-center xl:items-start gap-8">
-            {/* Profile Image */}
-            <div className="relative group">
-              {animal.profilePicture ? (
-                <div className="relative">
-                  <img 
-                    src={animal.profilePicture} 
-                    alt={`${animal.name}'s profile picture`}
-                    className={`w-64 h-64 xl:w-80 xl:h-80 rounded-3xl object-cover shadow-2xl ring-4 ${
-                      animal.dateOfDeath 
-                        ? 'ring-gray-400/50 dark:ring-gray-600/50 grayscale' 
-                        : 'ring-white/50 dark:ring-gray-700/50'
-                    } transition-all duration-300 group-hover:scale-105`}
-                  />
-                  <div className={`absolute inset-0 rounded-3xl ${
-                    animal.dateOfDeath 
-                      ? 'bg-gradient-to-t from-gray-900/40 to-gray-600/20' 
-                      : 'bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100'
-                  } transition-opacity duration-300`}></div>
-                  {animal.dateOfDeath && (
-                    <div className="absolute top-4 right-4 bg-red-500/90 backdrop-blur text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
-                      ✝ Deceased
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className={`w-64 h-64 xl:w-80 xl:h-80 rounded-3xl ${
-                  animal.dateOfDeath 
-                    ? 'bg-gradient-to-br from-gray-200 via-gray-100 to-gray-200 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 grayscale' 
-                    : 'bg-gradient-to-br from-emerald-100 via-emerald-50 to-teal-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600'
-                } shadow-2xl ring-4 ${
-                  animal.dateOfDeath 
-                    ? 'ring-gray-400/50 dark:ring-gray-600/50' 
-                    : 'ring-white/50 dark:ring-gray-700/50'
-                } flex items-center justify-center group-hover:scale-105 transition-transform duration-300`}>
-                  <Heart className={`h-24 w-24 xl:h-32 xl:w-32 ${
-                    animal.dateOfDeath 
-                      ? 'text-gray-400 dark:text-gray-600' 
-                      : 'text-emerald-400 dark:text-gray-400'
-                  }`} />
-                  {animal.dateOfDeath && (
-                    <div className="absolute top-4 right-4 bg-red-500/90 backdrop-blur text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
-                      ✝ Deceased
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Profile Info */}
-            <div className="flex-1 text-center xl:text-left max-w-3xl">
-              {/* Status Badges */}
-              <div className="flex items-center justify-center xl:justify-start flex-wrap gap-3 mb-6">
-                {animal.dateOfDeath && (
-                  <div className="flex items-center px-4 py-2 bg-gradient-to-r from-red-100 to-red-200 dark:from-red-900/40 dark:to-red-800/40 text-red-800 dark:text-red-200 rounded-2xl font-semibold shadow-lg">
-                    <span className="mr-2">✝</span>
-                    Deceased
-                  </div>
-                )}
-                <div className={`flex items-center px-4 py-2 bg-gradient-to-r ${
-                  animal.dateOfDeath 
-                    ? 'from-gray-100 to-gray-200 dark:from-gray-700/40 dark:to-gray-600/40 text-gray-700 dark:text-gray-300' 
-                    : 'from-emerald-100 to-emerald-200 dark:from-emerald-900/40 dark:to-emerald-800/40 text-emerald-800 dark:text-emerald-200'
-                } rounded-2xl font-semibold shadow-lg`}>
-                  <Heart className="h-4 w-4 mr-2" />
-                  {animal.species.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                </div>
-                {animal.breed && (
-                  <div className={`flex items-center px-4 py-2 bg-gradient-to-r ${
-                    animal.dateOfDeath 
-                      ? 'from-gray-100 to-gray-200 dark:from-gray-700/40 dark:to-gray-600/40 text-gray-700 dark:text-gray-300' 
-                      : 'from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/40 text-blue-800 dark:text-blue-200'
-                  } rounded-2xl font-semibold shadow-lg`}>
-                    <Tag className="h-4 w-4 mr-2" />
-                    {animal.breed}
-                  </div>
-                )}
-              </div>
-              
-              {/* Name */}
-              <h1 className="text-3xl xl:text-4xl font-black mb-6 text-gray-900 dark:text-white tracking-tight">
-                {animal.name}
-              </h1>
-
-              {/* Quick Stats Grid */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl p-4 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
-                  <div className="flex items-center justify-center xl:justify-start mb-2">
-                    <User className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Sex</p>
-                  </div>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white capitalize text-center xl:text-left">{animal.sex}</p>
-                </div>
-                
-                <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl p-4 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
-                  <div className="flex items-center justify-center xl:justify-start mb-2">
-                    <Calendar className="h-5 w-5 text-purple-600 dark:text-purple-400 mr-2" />
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Age</p>
-                  </div>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white text-center xl:text-left">{formatDistanceToNow(animal.dateOfBirth, { addSuffix: false })}</p>
-                </div>
-
-                <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl p-4 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
-                  <div className="flex items-center justify-center xl:justify-start mb-2">
-                    <Calendar className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Born</p>
-                  </div>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white text-center xl:text-left">{format(animal.dateOfBirth, 'MMM d, yyyy')}</p>
-                </div>
-
-                {animal.color && (
-                  <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl p-4 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
-                    <div className="flex items-center justify-center xl:justify-start mb-2">
-                      <Eye className="h-5 w-5 text-orange-600 dark:text-orange-400 mr-2" />
-                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Color</p>
-                    </div>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white text-center xl:text-left">{animal.color}</p>
-                  </div>
-                )}
-
-                {animal.weight && (
-                  <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl p-4 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
-                    <div className="flex items-center justify-center xl:justify-start mb-2">
-                      <Weight className="h-5 w-5 text-red-600 dark:text-red-400 mr-2" />
-                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Weight</p>
-                    </div>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white text-center xl:text-left">{animal.weight} {animal.weightUnit}</p>
-                  </div>
-                )}
-
-                {animal.height && (
-                  <div className="bg-white/60 dark:bg-gray-800/60 rounded-2xl p-4 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
-                    <div className="flex items-center justify-center xl:justify-start mb-2">
-                      <Ruler className="h-5 w-5 text-indigo-600 dark:text-indigo-400 mr-2" />
-                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Height</p>
-                    </div>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white text-center xl:text-left">{animal.height} {animal.heightUnit}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Modern Tab Navigation */}
-        <div className="bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl rounded-2xl border border-gray-200/50 dark:border-gray-700/50 p-2 mb-8 shadow-xl">
-          <div className="flex flex-wrap gap-2">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`group flex items-center px-6 py-4 rounded-2xl text-sm font-semibold transition-all duration-300 relative overflow-hidden ${
-                  activeTab === tab.id
-                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-xl shadow-emerald-500/25 transform scale-105'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-gray-800/80 hover:shadow-lg hover:scale-105'
-                }`}
-              >
-                <div className={`${
-                  activeTab === tab.id ? 'text-white' : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200'
-                } transition-colors duration-300`}>
-                  {tab.icon}
-                </div>
-                <span className="ml-3 font-medium">{tab.label}</span>
-                {activeTab === tab.id && (
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-400/20 to-emerald-600/20 animate-pulse"></div>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Health Update Form Modal */}
-        {showHealthForm && (
-          <div className="mb-6">
-            <HealthUpdateForm
-              animalId={animal.id}
-              animalName={animal.name}
-              onSuccess={handleHealthUpdateSuccess}
-              onCancel={() => setShowHealthForm(false)}
-            />
-          </div>
-        )}
-
-        {/* Tab Content */}
-        <div className="space-y-6">
-          {activeTab === 'overview' && (
-            <>
-              {/* Recent Activity */}
-              <RecentActivity
-                animalId={animal.id}
-                animalName={animal.name}
-                refreshTrigger={refreshTrigger}
-                onViewAll={() => setActiveTab('activity')}
-              />
-
-              {/* Modern Information Cards */}
-              <div className="space-y-6">
-                {/* Identification Information */}
-                {(animal.microchipNumber || animal.registrationNumber || animal.dateOfDeath) && (
-                  <div className="bg-white/30 dark:bg-gray-900/30 backdrop-blur-xl rounded-3xl border border-gray-200/50 dark:border-gray-700/50 p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 group">
-                    <div className="flex items-center mb-6">
-                      <div className="p-3 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl shadow-lg group-hover:shadow-emerald-500/25 transition-all duration-300">
-                        <Tag className="h-6 w-6 text-white" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Basic Info & Quick Actions */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Basic Information */}
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Heart className="h-5 w-5 text-red-500" />
+                  <span>Basic Information</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
+                  {animal.microchipNumber && (
+                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <Tag className="h-4 w-4 text-gray-500" />
+                      <div>
+                        <p className="text-sm font-medium">Microchip</p>
+                        <p className="text-sm text-gray-600">{animal.microchipNumber}</p>
                       </div>
-                      <h3 className="text-2xl font-bold text-gray-900 dark:text-white ml-4">Identification</h3>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {animal.microchipNumber && (
-                        <div className="bg-white/40 dark:bg-gray-800/40 rounded-2xl p-6 border border-gray-200/30 dark:border-gray-700/30">
-                          <div className="flex items-center mb-3">
-                            <div className="w-2 h-2 bg-emerald-500 rounded-full mr-3"></div>
-                            <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Microchip</span>
-                          </div>
-                          <span className="text-lg font-bold text-gray-900 dark:text-white font-mono">{animal.microchipNumber}</span>
-                        </div>
-                      )}
-                      {animal.registrationNumber && (
-                        <div className="bg-white/40 dark:bg-gray-800/40 rounded-2xl p-6 border border-gray-200/30 dark:border-gray-700/30">
-                          <div className="flex items-center mb-3">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                            <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Registration</span>
-                          </div>
-                          <span className="text-lg font-bold text-gray-900 dark:text-white font-mono">{animal.registrationNumber}</span>
-                        </div>
-                      )}
-                      {animal.dateOfDeath && (
-                        <div className="bg-white/40 dark:bg-gray-800/40 rounded-2xl p-6 border border-gray-200/30 dark:border-gray-700/30 md:col-span-2">
-                          <div className="flex items-center mb-3">
-                            <div className="w-2 h-2 bg-red-500 rounded-full mr-3"></div>
-                            <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Date of Death</span>
-                          </div>
-                          <span className="text-lg font-bold text-gray-900 dark:text-white">{format(animal.dateOfDeath, 'MMMM d, yyyy')}</span>
-                          {animal.deceasedNotes && (
-                            <div className="mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
-                              <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider block mb-2">Notes</span>
-                              <p className="text-gray-700 dark:text-gray-300">{animal.deceasedNotes}</p>
+                  )}
+                  {animal.registrationNumber && (
+                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <Star className="h-4 w-4 text-gray-500" />
+                      <div>
+                        <p className="text-sm font-medium">Registration</p>
+                        <p className="text-sm text-gray-600">{animal.registrationNumber}</p>
+                      </div>
+                    </div>
+                  )}
+                  {animal.markings && (
+                    <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <MapPin className="h-4 w-4 text-gray-500 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Markings & Features</p>
+                        <p className="text-sm text-gray-600">{animal.markings}</p>
+                      </div>
+                    </div>
+                  )}
+                  {animal.notes && (
+                    <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <FileText className="h-4 w-4 text-gray-500 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Notes</p>
+                        <p className="text-sm text-gray-600">{animal.notes}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Activity className="h-5 w-5 text-blue-500" />
+                  <span>Quick Actions</span>
+                </CardTitle>
+                <CardDescription>
+                  Common tasks for {animal.name}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button variant="outline" className="h-16 flex flex-col items-center justify-center space-y-1">
+                    <Weight className="h-5 w-5" />
+                    <span className="text-xs">Add Weight</span>
+                  </Button>
+                  <Button variant="outline" className="h-16 flex flex-col items-center justify-center space-y-1">
+                    <Ruler className="h-5 w-5" />
+                    <span className="text-xs">Add Height</span>
+                  </Button>
+                  <Button variant="outline" className="h-16 flex flex-col items-center justify-center space-y-1">
+                    <FileText className="h-5 w-5" />
+                    <span className="text-xs">Add Medical</span>
+                  </Button>
+                  <Button variant="outline" className="h-16 flex flex-col items-center justify-center space-y-1">
+                    <Calendar className="h-5 w-5" />
+                    <span className="text-xs">Add Event</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Records & Statistics */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="shadow-lg bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-500 rounded-lg">
+                      <Weight className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-blue-700">Current Weight</p>
+                      <p className="text-2xl font-bold text-blue-900">
+                        {latestWeight ? `${latestWeight.weight} ${latestWeight.unit}` : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-lg bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-green-500 rounded-lg">
+                      <Ruler className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-green-700">Current Height</p>
+                      <p className="text-2xl font-bold text-green-900">
+                        {latestHeight ? `${latestHeight.height} ${latestHeight.unit}` : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-lg bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-purple-500 rounded-lg">
+                      <FileText className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-purple-700">Medical Records</p>
+                      <p className="text-2xl font-bold text-purple-900">{medicalRecords.length}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Records Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Weight Records */}
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Weight className="h-5 w-5 text-blue-500" />
+                    <span>Weight History</span>
+                  </CardTitle>
+                  <CardDescription>
+                    {weightRecords.length} record{weightRecords.length !== 1 ? 's' : ''}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {weightRecords.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Weight className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">No weight records yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {weightRecords
+                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                        .slice(0, 5)
+                        .map((record) => (
+                          <div key={record.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <TrendingUp className="h-4 w-4 text-blue-500" />
+                              <span className="font-medium">{record.weight} {record.unit}</span>
                             </div>
+                            <span className="text-sm text-gray-600">
+                              {format(record.date, 'MMM d, yyyy')}
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                  <Button variant="outline" size="sm" className="w-full mt-4">
+                    <Weight className="h-4 w-4 mr-2" />
+                    Add Weight Record
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Height Records */}
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Ruler className="h-5 w-5 text-green-500" />
+                    <span>Height History</span>
+                  </CardTitle>
+                  <CardDescription>
+                    {heightRecords.length} record{heightRecords.length !== 1 ? 's' : ''}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {heightRecords.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Ruler className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">No height records yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {heightRecords
+                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                        .slice(0, 5)
+                        .map((record) => (
+                          <div key={record.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <TrendingUp className="h-4 w-4 text-green-500" />
+                              <span className="font-medium">{record.height} {record.unit}</span>
+                            </div>
+                            <span className="text-sm text-gray-600">
+                              {format(record.date, 'MMM d, yyyy')}
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                  <Button variant="outline" size="sm" className="w-full mt-4">
+                    <Ruler className="h-4 w-4 mr-2" />
+                    Add Height Record
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Medical Records */}
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="h-5 w-5 text-purple-500" />
+                  <span>Recent Medical Records</span>
+                </CardTitle>
+                <CardDescription>
+                  Latest medical events and treatments
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {medicalRecords.length === 0 ? (
+                  <div className="text-center py-8">
+                    <FileText className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">No medical records yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {recentMedical.map((record) => (
+                      <div key={record.id} className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
+                        <div className="flex-shrink-0">
+                          {record.type === 'vaccination' && (
+                            <CheckCircle className="h-5 w-5 text-green-500" />
+                          )}
+                          {record.type === 'surgery' && (
+                            <AlertCircle className="h-5 w-5 text-red-500" />
+                          )}
+                          {record.type === 'checkup' && (
+                            <Activity className="h-5 w-5 text-blue-500" />
+                          )}
+                          {record.type === 'treatment' && (
+                            <FileText className="h-5 w-5 text-purple-500" />
+                          )}
+                          {record.type === 'medication' && (
+                            <FileText className="h-5 w-5 text-orange-500" />
+                          )}
+                          {record.type === 'other' && (
+                            <FileText className="h-5 w-5 text-gray-500" />
                           )}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Markings & Features */}
-                {animal.markings && (
-                  <div className="bg-white/30 dark:bg-gray-900/30 backdrop-blur-xl rounded-3xl border border-gray-200/50 dark:border-gray-700/50 p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 group">
-                    <div className="flex items-center mb-6">
-                      <div className="p-3 bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl shadow-lg group-hover:shadow-teal-500/25 transition-all duration-300">
-                        <Tag className="h-6 w-6 text-white" />
+                        <div className="flex-1">
+                          <h4 className="font-medium">{record.title}</h4>
+                          <p className="text-sm text-gray-600 capitalize">
+                            {record.type} • {format(record.date, 'MMM d, yyyy')}
+                          </p>
+                          {record.description && (
+                            <p className="text-sm text-gray-500 mt-1">{record.description}</p>
+                          )}
+                        </div>
                       </div>
-                      <h3 className="text-2xl font-bold text-gray-900 dark:text-white ml-4">Markings & Features</h3>
-                    </div>
-                    <div className="bg-white/40 dark:bg-gray-800/40 rounded-2xl p-6 border border-gray-200/30 dark:border-gray-700/30">
-                      <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">{animal.markings}</p>
-                    </div>
+                    ))}
                   </div>
                 )}
-
-                {/* Additional Notes */}
-                {animal.notes && (
-                  <div className="bg-white/30 dark:bg-gray-900/30 backdrop-blur-xl rounded-3xl border border-gray-200/50 dark:border-gray-700/50 p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 group">
-                    <div className="flex items-center mb-6">
-                      <div className="p-3 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl shadow-lg group-hover:shadow-green-500/25 transition-all duration-300">
-                        <Edit className="h-6 w-6 text-white" />
-                      </div>
-                      <h3 className="text-2xl font-bold text-gray-900 dark:text-white ml-4">Additional Notes</h3>
-                    </div>
-                    <div className="bg-white/40 dark:bg-gray-800/40 rounded-2xl p-6 border border-gray-200/30 dark:border-gray-700/30">
-                      <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">{animal.notes}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-
-          {activeTab === 'activity' && (
-            <UnifiedActivityTimeline
-              animalId={animal.id}
-              animalName={animal.name}
-              refreshTrigger={refreshTrigger}
-              onMediaDeleted={handleMediaDeleted}
-            />
-          )}
-
-          {activeTab === 'weight' && (
-            <WeightChart
-              animalId={animal.id}
-              animalName={animal.name}
-              refreshTrigger={refreshTrigger}
-            />
-          )}
-
-          {activeTab === 'media' && (
-            <AnimalMediaTab
-              animalId={animal.id}
-              animalName={animal.name}
-              refreshTrigger={refreshTrigger}
-              onMediaDeleted={handleMediaDeleted}
-            />
-          )}
+                <Button variant="outline" size="sm" className="w-full mt-4">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Add Medical Record
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   )
 } 
