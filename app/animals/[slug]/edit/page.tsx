@@ -989,6 +989,7 @@ export default function EditAnimalPage() {
           </form>
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 } 
