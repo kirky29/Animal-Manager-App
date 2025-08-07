@@ -779,37 +779,7 @@ export default function EditAnimalPage() {
                 />
               </div>
 
-              <div>
-                <label htmlFor="dateOfDeath" className="block text-sm font-medium mb-2">
-                  Date of Death
-                </label>
-                <input
-                  id="dateOfDeath"
-                  name="dateOfDeath"
-                  type="date"
-                  value={formData.dateOfDeath}
-                  onChange={handleInputChange}
-                  max={new Date().toISOString().split('T')[0]}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
 
-              {formData.dateOfDeath && (
-                <div>
-                  <label htmlFor="deceasedNotes" className="block text-sm font-medium mb-2">
-                    Deceased Notes
-                  </label>
-                  <textarea
-                    id="deceasedNotes"
-                    name="deceasedNotes"
-                    value={formData.deceasedNotes}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Notes about the animal's passing..."
-                  />
-                </div>
-              )}
 
               <div>
                 <label htmlFor="color" className="block text-sm font-medium mb-2">
@@ -969,6 +939,46 @@ export default function EditAnimalPage() {
                   placeholder="Any additional information about this animal..."
                 />
               </div>
+            </div>
+
+            {/* Deceased Information */}
+            <div className="space-y-6">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-gray-800 mb-6">Deceased Information</h3>
+                <p className="text-sm text-gray-600">Mark this animal as deceased and add relevant notes</p>
+              </div>
+
+              <div>
+                <label htmlFor="dateOfDeath" className="block text-sm font-medium mb-2">
+                  Date of Death
+                </label>
+                <input
+                  id="dateOfDeath"
+                  name="dateOfDeath"
+                  type="date"
+                  value={formData.dateOfDeath}
+                  onChange={handleInputChange}
+                  max={new Date().toISOString().split('T')[0]}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              {formData.dateOfDeath && (
+                <div>
+                  <label htmlFor="deceasedNotes" className="block text-sm font-medium mb-2">
+                    Deceased Notes
+                  </label>
+                  <textarea
+                    id="deceasedNotes"
+                    name="deceasedNotes"
+                    value={formData.deceasedNotes}
+                    onChange={handleInputChange}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Notes about the animal's passing..."
+                  />
+                </div>
+              )}
             </div>
 
             {/* Submit Buttons */}
