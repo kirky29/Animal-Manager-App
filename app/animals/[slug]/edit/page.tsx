@@ -376,6 +376,7 @@ export default function EditAnimalPage() {
     breed: '',
     dateOfBirth: '',
     dateOfDeath: '',
+    deceasedNotes: '',
     sex: 'male',
     color: '',
     markings: '',
@@ -420,6 +421,7 @@ export default function EditAnimalPage() {
           breed: animal.breed || '',
           dateOfBirth: animal.dateOfBirth.toISOString().split('T')[0],
           dateOfDeath: animal.dateOfDeath ? animal.dateOfDeath.toISOString().split('T')[0] : '',
+          deceasedNotes: animal.deceasedNotes || '',
           sex: animal.sex,
           color: animal.color || '',
           markings: animal.markings || '',
@@ -481,6 +483,24 @@ export default function EditAnimalPage() {
         
         if (birthDate > today) {
           setError('Date of birth cannot be in the future')
+          return
+        }
+      }
+      
+      // Validate date of death is not in the future and is after birth date
+      if (cleanedData.dateOfDeath) {
+        const deathDate = new Date(cleanedData.dateOfDeath)
+        const birthDate = new Date(cleanedData.dateOfBirth)
+        const today = new Date()
+        today.setHours(23, 59, 59, 999)
+        
+        if (deathDate > today) {
+          setError('Date of death cannot be in the future')
+          return
+        }
+        
+        if (deathDate < birthDate) {
+          setError('Date of death cannot be before date of birth')
           return
         }
       }
@@ -769,9 +789,27 @@ export default function EditAnimalPage() {
                   type="date"
                   value={formData.dateOfDeath}
                   onChange={handleInputChange}
+                  max={new Date().toISOString().split('T')[0]}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
+
+              {formData.dateOfDeath && (
+                <div>
+                  <label htmlFor="deceasedNotes" className="block text-sm font-medium mb-2">
+                    Deceased Notes
+                  </label>
+                  <textarea
+                    id="deceasedNotes"
+                    name="deceasedNotes"
+                    value={formData.deceasedNotes}
+                    onChange={handleInputChange}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Notes about the animal's passing..."
+                  />
+                </div>
+              )}
 
               <div>
                 <label htmlFor="color" className="block text-sm font-medium mb-2">
@@ -954,4 +992,5 @@ export default function EditAnimalPage() {
     </div>
     </div>
   )
+} 
 } 

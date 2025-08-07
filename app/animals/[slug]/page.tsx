@@ -474,6 +474,12 @@ export default function AnimalProfilePage() {
                             <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Date of Death</span>
                           </div>
                           <span className="text-lg font-bold text-gray-900 dark:text-white">{format(animal.dateOfDeath, 'MMMM d, yyyy')}</span>
+                          {animal.deceasedNotes && (
+                            <div className="mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
+                              <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider block mb-2">Notes</span>
+                              <p className="text-gray-700 dark:text-gray-300">{animal.deceasedNotes}</p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

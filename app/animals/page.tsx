@@ -23,6 +23,7 @@ export default function AnimalsPage() {
   const [sortBy, setSortBy] = useState('name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [ageFilter, setAgeFilter] = useState('all')
+  const [deceasedFilter, setDeceasedFilter] = useState('living') // Default to showing only living animals
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   // Function to get species-specific icon
@@ -111,6 +112,17 @@ export default function AnimalsPage() {
       })
     }
 
+    // Filter by deceased status
+    if (deceasedFilter !== 'all') {
+      filtered = filtered.filter(animal => {
+        switch (deceasedFilter) {
+          case 'living': return !animal.dateOfDeath
+          case 'deceased': return !!animal.dateOfDeath
+          default: return true
+        }
+      })
+    }
+
     // Sort animals
     filtered.sort((a, b) => {
       let comparison = 0
@@ -138,7 +150,7 @@ export default function AnimalsPage() {
     })
 
     setFilteredAnimals(filtered)
-  }, [animals, searchTerm, selectedSpecies, selectedSex, ageFilter, sortBy, sortOrder])
+  }, [animals, searchTerm, selectedSpecies, selectedSex, ageFilter, deceasedFilter, sortBy, sortOrder])
 
   const uniqueSpecies = Array.from(new Set(animals.map(animal => animal.species)))
   const uniqueSexes = Array.from(new Set(animals.map(animal => animal.sex)))
@@ -251,6 +263,16 @@ export default function AnimalsPage() {
                     <option value="young">Young (less than 1 year)</option>
                     <option value="adult">Adult (1-7 years)</option>
                     <option value="senior">Senior (7+ years)</option>
+                  </select>
+
+                  <select
+                    value={deceasedFilter}
+                    onChange={(e) => setDeceasedFilter(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <option value="living">Living Only</option>
+                    <option value="deceased">Deceased Only</option>
+                    <option value="all">All Animals</option>
                   </select>
 
                   <div className="flex items-center space-x-2">

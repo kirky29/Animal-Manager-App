@@ -374,6 +374,7 @@ export default function NewAnimalPage() {
     breed: '',
     dateOfBirth: '',
     dateOfDeath: '',
+    deceasedNotes: '',
     sex: 'male',
     color: '',
     markings: '',

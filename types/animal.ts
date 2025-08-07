@@ -5,6 +5,7 @@ export interface Animal {
   breed?: string
   dateOfBirth: Date
   dateOfDeath?: Date
+  deceasedNotes?: string
   sex: string
   color?: string
   markings?: string
@@ -220,6 +221,7 @@ export interface AnimalFormData {
   breed?: string
   dateOfBirth: string
   dateOfDeath?: string
+  deceasedNotes?: string
   sex: string
   color?: string
   markings?: string
