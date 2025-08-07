@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Plus, Search, Filter, PawPrint, Calendar, User, ArrowUpDown, SortAsc, SortDesc, Heart, Fish, Bird, Circle } from 'lucide-react'
+import { Plus, Search, Filter, PawPrint, Calendar, User, ArrowUpDown, SortAsc, SortDesc, Heart, Fish, Bird, Circle, Grid3X3, List, Eye } from 'lucide-react'
 import Link from 'next/link'
 import { Animal } from '@/types/animal'
 import { getAnimals } from '@/lib/firestore'
 import { formatDistanceToNow } from 'date-fns'
 import { generateUniqueSlug } from '@/lib/utils'
+import { AnimalSearchFilter } from '@/components/animal-search-filter'
 
 export default function AnimalsPage() {
   const { user } = useAuth()
@@ -22,10 +23,11 @@ export default function AnimalsPage() {
   const [sortBy, setSortBy] = useState('name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [ageFilter, setAgeFilter] = useState('all')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   // Function to get species-specific icon
   const getSpeciesIcon = (species: string) => {
-    const iconClass = "h-16 w-16 text-blue-400"
+    const iconClass = "h-16 w-16 text-emerald-400"
     
     switch (species.toLowerCase()) {
       case 'dog': return <Heart className={iconClass} />
@@ -143,219 +145,280 @@ export default function AnimalsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
-          <p>Loading your animals...</p>
+      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-gray-200/50 dark:border-gray-700/50">
+          <div className="text-center space-y-4">
+            <div className="h-12 w-12 border-b-2 border-emerald-600 rounded-full animate-spin mx-auto"></div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Loading Animals</h3>
+              <p className="text-gray-600 dark:text-gray-400">Gathering your animal data...</p>
+            </div>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div>
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8 rounded-lg mb-8">
-        <div className="flex flex-col lg:flex-row items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">My Animals</h1>
-            <p className="text-blue-100">
-              Manage and track all your animals in one place
-            </p>
-          </div>
-          <div className="mt-4 lg:mt-0 text-center">
-            <div className="flex gap-6 mb-4">
-              <div>
-                <div className="text-2xl font-bold">{animals.length}</div>
-                <div className="text-blue-200 text-sm">Total Animals</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{uniqueSpecies.length}</div>
-                <div className="text-blue-200 text-sm">Species</div>
+    <div className="min-h-screen bg-white dark:bg-gray-900">
+      {/* Modern Header */}
+      <header className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-40">
+        <div className="w-full px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Animals</h1>
+              <div className="h-6 w-px bg-gray-200 dark:bg-gray-700"></div>
+              <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                <span>{animals.length} Total Animals</span>
+                <span>•</span>
+                <span>{uniqueSpecies.length} Species</span>
               </div>
             </div>
-            <Link href="/animals/new">
-              <Button className="bg-white/20 hover:bg-white/30 text-white border-white/20">
-                <Plus className="mr-2 h-4 w-4" />
-                Add New Animal
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
 
-      {/* Search and Filter */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Search & Filter</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search animals by name, species, breed, or color..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          {/* Filters */}
-          <div className="flex flex-wrap gap-3">
-            <div className="flex items-center space-x-2">
-              <Filter className="h-4 w-4 text-gray-400" />
-              <select
-                value={selectedSpecies}
-                onChange={(e) => setSelectedSpecies(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Species</option>
-                {uniqueSpecies.map(species => (
-                  <option key={species} value={species}>
-                    {species.charAt(0).toUpperCase() + species.slice(1).replace('-', ' ')}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <select
-              value={selectedSex}
-              onChange={(e) => setSelectedSex(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">All Sexes</option>
-              {uniqueSexes.map(sex => (
-                <option key={sex} value={sex}>
-                  {sex.charAt(0).toUpperCase() + sex.slice(1)}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={ageFilter}
-              onChange={(e) => setAgeFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">All Ages</option>
-              <option value="young">Young (less than 1 year)</option>
-              <option value="adult">Adult (1-7 years)</option>
-              <option value="senior">Senior (7+ years)</option>
-            </select>
-
-            <div className="flex items-center space-x-2">
-              <ArrowUpDown className="h-4 w-4 text-gray-400" />
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="name">Sort by Name</option>
-                <option value="species">Sort by Species</option>
-                <option value="age">Sort by Age</option>
-                <option value="created">Sort by Date Added</option>
-              </select>
-              <button
-                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                {sortOrder === 'asc' ? (
-                  <SortAsc className="h-4 w-4" />
-                ) : (
-                  <SortDesc className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-          </div>
-          
-          <div className="text-sm text-gray-600">
-            Showing {filteredAnimals.length} of {animals.length} animals
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Animals Grid */}
-      {filteredAnimals.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-16">
-            <PawPrint className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">
-              {animals.length === 0 ? 'No Animals Yet' : 'No Results Found'}
-            </h3>
-            <p className="text-gray-600 mb-6">
-              {animals.length === 0 
-                ? "Start building your animal collection by adding your first animal."
-                : "Try adjusting your search or filter criteria."
-              }
-            </p>
-            {animals.length === 0 && (
+            <div className="flex items-center space-x-3">
               <Link href="/animals/new">
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Your First Animal
+                <Button 
+                  className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-4 py-2 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Animal
                 </Button>
               </Link>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredAnimals.map((animal) => {
-            const slug = generateUniqueSlug(animal.name, animal.id)
-            return (
-              <Link key={animal.id} href={`/animals/${slug}`} className="block">
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-                <CardContent className="p-0">
-                  {/* Image */}
-                  <div className="relative">
-                    {animal.profilePicture ? (
-                      <img 
-                        src={animal.profilePicture} 
-                        alt={`${animal.name}'s profile`}
-                        className="w-full h-48 object-cover rounded-t-lg group-hover:brightness-105 transition-all"
-                      />
-                    ) : (
-                      <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 rounded-t-lg flex items-center justify-center group-hover:brightness-105 transition-all">
-                        {getSpeciesIcon(animal.species) || <PawPrint className="h-16 w-16 text-blue-400" />}
-                      </div>
-                    )}
-                    {animal.dateOfDeath && (
-                      <span className="absolute top-2 right-2 text-xs bg-red-500 text-white px-2 py-1 rounded">
-                        Deceased
-                      </span>
-                    )}
-                  </div>
-                  
-                  {/* Content */}
-                  <div className="p-4">
-                    <h3 className="font-bold text-lg mb-1 group-hover:text-blue-600 transition-colors">{animal.name}</h3>
-                    <p className="text-gray-600 mb-3 capitalize">
-                      {animal.species.replace('-', ' ')}
-                    </p>
-                    
-                    <div className="grid grid-cols-2 gap-2 text-sm text-gray-500 mb-4">
-                      <div className="flex items-center">
-                        <User className="h-3 w-3 mr-1" />
-                        <span className="capitalize">{animal.sex}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        <span>{formatDistanceToNow(animal.dateOfBirth)} old</span>
-                      </div>
-                    </div>
-                    
-                    <div className="w-full bg-blue-600 text-white text-center py-2 px-4 rounded-lg group-hover:bg-blue-700 transition-colors">
-                      View Profile
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          )
-        })}
+            </div>
+          </div>
         </div>
-      )}
+      </header>
+
+      {/* Main Content */}
+      <div className="w-full px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Search and Filter Card */}
+          <Card className="shadow-xl border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl mb-8">
+            <CardHeader className="border-b border-gray-200/50 dark:border-gray-700/50">
+              <CardTitle className="text-lg text-gray-900 dark:text-white">Search & Filter</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-6">
+                {/* Search Bar */}
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search animals by name, species, breed, or color..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  />
+                </div>
+                
+                {/* Filters Row */}
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Filter className="h-4 w-4 text-gray-400" />
+                    <select
+                      value={selectedSpecies}
+                      onChange={(e) => setSelectedSpecies(e.target.value)}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      <option value="all">All Species</option>
+                      {uniqueSpecies.map(species => (
+                        <option key={species} value={species}>
+                          {species.charAt(0).toUpperCase() + species.slice(1).replace('-', ' ')}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <select
+                    value={selectedSex}
+                    onChange={(e) => setSelectedSex(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <option value="all">All Sexes</option>
+                    {uniqueSexes.map(sex => (
+                      <option key={sex} value={sex}>
+                        {sex.charAt(0).toUpperCase() + sex.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={ageFilter}
+                    onChange={(e) => setAgeFilter(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <option value="all">All Ages</option>
+                    <option value="young">Young (less than 1 year)</option>
+                    <option value="adult">Adult (1-7 years)</option>
+                    <option value="senior">Senior (7+ years)</option>
+                  </select>
+
+                  <div className="flex items-center space-x-2">
+                    <ArrowUpDown className="h-4 w-4 text-gray-400" />
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      <option value="name">Sort by Name</option>
+                      <option value="species">Sort by Species</option>
+                      <option value="age">Sort by Age</option>
+                      <option value="created">Sort by Date Added</option>
+                    </select>
+                    <button
+                      onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                      className="p-2 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                    >
+                      {sortOrder === 'asc' ? (
+                        <SortAsc className="h-4 w-4" />
+                      ) : (
+                        <SortDesc className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+
+                  {/* View Mode Toggle */}
+                  <div className="flex items-center space-x-1 ml-auto">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`p-2 rounded-lg transition-colors ${
+                        viewMode === 'grid' 
+                          ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400' 
+                          : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      <Grid3X3 className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`p-2 rounded-lg transition-colors ${
+                        viewMode === 'list' 
+                          ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400' 
+                          : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      <List className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="text-sm text-gray-600 dark:text-gray-400 border-t border-gray-200/50 dark:border-gray-700/50 pt-4">
+                  Showing {filteredAnimals.length} of {animals.length} animals
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Animals Display */}
+          {filteredAnimals.length === 0 ? (
+            <Card className="shadow-xl border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl">
+              <CardContent className="text-center py-16">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-2xl mb-4">
+                  <PawPrint className="h-8 w-8 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                  {animals.length === 0 ? 'No Animals Yet' : 'No Results Found'}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                  {animals.length === 0 
+                    ? "Start building your animal collection by adding your first animal."
+                    : "Try adjusting your search or filter criteria."
+                  }
+                </p>
+                {animals.length === 0 && (
+                  <Link href="/animals/new">
+                    <Button className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Your First Animal
+                    </Button>
+                  </Link>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className={viewMode === 'grid' 
+              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" 
+              : "space-y-4"
+            }>
+              {filteredAnimals.map((animal) => {
+                const slug = generateUniqueSlug(animal.name, animal.id)
+                return (
+                  <Link key={animal.id} href={`/animals/${slug}`} className="block">
+                    <Card className={`hover:shadow-xl transition-all duration-200 cursor-pointer group border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl ${
+                      viewMode === 'list' ? 'flex items-center space-x-4' : 'h-full flex flex-col'
+                    }`}>
+                      <CardContent className={`p-0 ${viewMode === 'list' ? 'flex items-center w-full' : 'flex flex-col h-full'}`}>
+                        {/* Image */}
+                        <div className={`relative ${viewMode === 'list' ? 'w-24 h-24 flex-shrink-0' : 'h-48 flex-shrink-0'}`}>
+                          {animal.profilePicture ? (
+                            <img 
+                              src={animal.profilePicture} 
+                              alt={`${animal.name}'s profile`}
+                              className={`${viewMode === 'list' 
+                                ? 'w-24 h-24 object-cover rounded-l-xl' 
+                                : 'w-full h-48 object-cover rounded-t-xl'
+                              } group-hover:brightness-105 transition-all`}
+                            />
+                          ) : (
+                            <div className={`${viewMode === 'list' 
+                              ? 'w-24 h-24 rounded-l-xl' 
+                              : 'w-full h-48 rounded-t-xl'
+                            } bg-gradient-to-br from-emerald-100 to-green-100 dark:from-emerald-900/50 dark:to-green-900/50 flex items-center justify-center group-hover:brightness-105 transition-all`}>
+                              {getSpeciesIcon(animal.species) || <PawPrint className="h-8 w-8 text-emerald-400" />}
+                            </div>
+                          )}
+                          {animal.dateOfDeath && (
+                            <span className="absolute top-2 right-2 text-xs bg-red-500 text-white px-2 py-1 rounded-lg">
+                              Deceased
+                            </span>
+                          )}
+                        </div>
+                        
+                        {/* Content */}
+                        <div className={`${viewMode === 'list' ? 'flex-1 p-4' : 'p-4 flex flex-col flex-1'}`}>
+                          <div className="flex items-start justify-between mb-2">
+                            <h3 className="font-bold text-lg text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                              {animal.name}
+                            </h3>
+                            {viewMode === 'list' && (
+                              <Eye className="h-4 w-4 text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" />
+                            )}
+                          </div>
+                          <p className="text-gray-600 dark:text-gray-400 mb-3 capitalize">
+                            {animal.species.replace('-', ' ')}
+                          </p>
+                          
+                          <div className={`grid ${viewMode === 'list' ? 'grid-cols-3' : 'grid-cols-2'} gap-2 text-sm text-gray-500 dark:text-gray-400 mb-4`}>
+                            <div className="flex items-center">
+                              <User className="h-3 w-3 mr-1" />
+                              <span className="capitalize">{animal.sex}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              <span>{formatDistanceToNow(animal.dateOfBirth)} old</span>
+                            </div>
+                            {viewMode === 'list' && animal.breed && (
+                              <div className="flex items-center">
+                                <span className="capitalize">{animal.breed}</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {viewMode === 'grid' && (
+                            <div className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 text-white text-center py-2 px-4 rounded-xl group-hover:from-emerald-700 group-hover:to-emerald-800 transition-all duration-200 font-medium mt-auto">
+                              View Profile
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Upload, X, Image as ImageIcon } from 'lucide-react'
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 
 interface ImageUploadProps {
   currentImageUrl?: string
@@ -35,27 +36,33 @@ export function ImageUpload({
       return
     }
 
-    // Validate file size (max 2MB for base64 storage)
-    if (file.size > 2 * 1024 * 1024) {
-      alert('Image must be smaller than 2MB for optimal performance')
+    // Validate file size (max 10MB for Firebase Storage)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Image must be smaller than 10MB')
       return
     }
 
     setUploading(true)
 
     try {
-      // Convert file to base64 data URL - NO Firebase Storage!
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string
-        setPreviewUrl(dataUrl)
-        onImageUpload(dataUrl) // Pass the base64 data URL directly
-        setUploading(false)
-      }
-      reader.readAsDataURL(file)
+      // Upload to Firebase Storage
+      const storage = getStorage()
+      const timestamp = Date.now()
+      const fileName = `${userId}/${animalId || 'profile'}_${timestamp}.jpg`
+      const storageRef = ref(storage, `animal-photos/${fileName}`)
+      
+      // Upload the file
+      const snapshot = await uploadBytes(storageRef, file)
+      
+      // Get the download URL
+      const downloadURL = await getDownloadURL(snapshot.ref)
+      
+      setPreviewUrl(downloadURL)
+      onImageUpload(downloadURL)
+      setUploading(false)
     } catch (error) {
-      console.error('Error processing image:', error)
-      alert('Failed to process image. Please try again.')
+      console.error('Error uploading image:', error)
+      alert('Failed to upload image. Please try again.')
       setPreviewUrl(currentImageUrl || null)
       setUploading(false)
     }
@@ -144,10 +151,10 @@ export function ImageUpload({
           className="w-full"
         >
           <Upload className="h-4 w-4 mr-2" />
-          {uploading ? 'Processing...' : 'Upload Image'}
+          {uploading ? 'Uploading...' : 'Upload Image'}
         </Button>
         <p className="text-xs text-gray-500 mt-1">
-          JPG, PNG, GIF up to 2MB
+          JPG, PNG, GIF up to 10MB
         </p>
       </div>
     </div>

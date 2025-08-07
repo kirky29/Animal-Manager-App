@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AnimalFormData, AnimalSpecies, getWeightUnits, getHeightUnits } from '@/types/animal'
 import { createAnimalWithAudit } from '@/lib/firestore'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Plus, Heart } from 'lucide-react'
 import Link from 'next/link'
 import { ImageUpload } from '@/components/ui/image-upload'
 
@@ -387,8 +387,6 @@ export default function NewAnimalPage() {
     heightUnit: 'cm',
   })
   
-
-  
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [customBreed, setCustomBreed] = useState('')
@@ -502,361 +500,370 @@ export default function NewAnimalPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Header */}
-      <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-        <div className="absolute inset-0 bg-black/20"></div>
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Navigation */}
-          <div className="flex items-center justify-between mb-8">
-            <Link href="/animals">
-              <Button variant="ghost" className="text-white/90 hover:text-white hover:bg-white/15 px-3 py-2 rounded-lg transition-all duration-200">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Animals
-              </Button>
-            </Link>
-            <div className="hidden sm:block text-white/60 text-sm">
-              Step 1 of 1
+    <div className="min-h-screen bg-white dark:bg-gray-900">
+      {/* Modern Header */}
+      <header className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-40">
+        <div className="w-full px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <Link href="/animals" className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                <ArrowLeft className="h-4 w-4" />
+                <span className="text-sm font-medium">Back to Animals</span>
+              </Link>
+              <div className="h-6 w-px bg-gray-200 dark:bg-gray-700"></div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Add New Animal</h1>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                <Heart className="h-4 w-4" />
+                <span>Create Profile</span>
+              </div>
             </div>
           </div>
-          
-          {/* Title Section */}
-          <div className="text-center">
-            <h1 className="text-4xl lg:text-5xl font-bold mb-4">Add New Animal</h1>
-            <p className="text-white/90 text-lg max-w-2xl mx-auto">
-              Create a profile for your animal - just name and species required!
-            </p>
-          </div>
         </div>
-      </div>
+      </header>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Card className="shadow-xl border-0 bg-white/90 backdrop-blur">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Animal Information</CardTitle>
-            <CardDescription>
-              Fill in your animal's details. Only name and species are required.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {error && (
-                <div className="p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg">
-                  {error}
-                </div>
-              )}
+      <div className="w-full px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Page Header */}
+          <div className="mb-8">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-emerald-100 to-green-100 dark:from-emerald-900/50 dark:to-green-900/50 rounded-2xl mb-4 border border-emerald-200/50 dark:border-emerald-700/30">
+                <Plus className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Create Animal Profile</h2>
+              <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                Add a new animal to your collection. Only name and species are required to get started.
+              </p>
+            </div>
+          </div>
 
-              {/* Basic Information */}
-              <div className="space-y-8">
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-6">Basic Information</h3>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium mb-2">
-                      Animal Name *
-                    </label>
-                    <input
-                      id="name"
-                      name="name"
-                      type="text"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="e.g., Buddy, Luna, Charlie"
-                      required
-                    />
+          {/* Form Card */}
+          <Card className="shadow-xl border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl">
+            <CardContent className="p-8">
+              <form onSubmit={handleSubmit} className="space-y-8">
+                {error && (
+                  <div className="p-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+                    {error}
                   </div>
+                )}
 
-                  <div>
-                    <label htmlFor="species" className="block text-sm font-medium mb-2">
-                      Species *
-                    </label>
-                    <select
-                      id="species"
-                      name="species"
-                      value={formData.species}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    >
-                      {ANIMAL_SPECIES.map(species => (
-                        <option key={species.value} value={species.value}>
-                          {species.label}
-                        </option>
-                      ))}
-                    </select>
-                    {formData.species === 'other' && (
+                {/* Basic Information */}
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Basic Information</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Animal Name *
+                      </label>
                       <input
+                        id="name"
+                        name="name"
                         type="text"
-                        placeholder="Enter custom species..."
-                        value={customSpecies}
-                        onChange={(e) => setCustomSpecies(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-2"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        placeholder="e.g., Buddy, Luna, Charlie"
                         required
                       />
-                    )}
-                  </div>
+                    </div>
 
-                  <div>
-                    <label htmlFor="breed" className="block text-sm font-medium mb-2">
-                      Breed
-                    </label>
-                    {formData.species === 'other' ? (
-                      <input
-                        id="breed"
-                        name="breed"
-                        type="text"
-                        value={formData.breed}
+                    <div className="space-y-2">
+                      <label htmlFor="species" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Species *
+                      </label>
+                      <select
+                        id="species"
+                        name="species"
+                        value={formData.species}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Enter breed for your custom species..."
-                      />
-                    ) : (
-                      <>
-                        <select
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        required
+                      >
+                        {ANIMAL_SPECIES.map(species => (
+                          <option key={species.value} value={species.value}>
+                            {species.label}
+                          </option>
+                        ))}
+                      </select>
+                      {formData.species === 'other' && (
+                        <input
+                          type="text"
+                          placeholder="Enter custom species..."
+                          value={customSpecies}
+                          onChange={(e) => setCustomSpecies(e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 mt-2"
+                          required
+                        />
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label htmlFor="breed" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Breed
+                      </label>
+                      {formData.species === 'other' ? (
+                        <input
                           id="breed"
                           name="breed"
-                          value={BREED_OPTIONS[formData.species as AnimalSpecies]?.includes(formData.breed || '') ? formData.breed || '' : ''}
+                          type="text"
+                          value={formData.breed}
                           onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="">Select a breed...</option>
-                          {BREED_OPTIONS[formData.species as AnimalSpecies]?.map(breed => (
-                            <option key={breed} value={breed}>
-                              {breed}
-                            </option>
-                          ))}
-                        </select>
-                        {formData.breed === 'Other' && (
-                          <input
-                            type="text"
-                            placeholder="Enter custom breed..."
-                            value={customBreed}
-                            onChange={(e) => setCustomBreed(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-2"
-                          />
-                        )}
-                      </>
-                    )}
-                  </div>
-
-                  <div>
-                    <label htmlFor="sex" className="block text-sm font-medium mb-2">
-                      Sex
-                    </label>
-                    <select
-                      id="sex"
-                      name="sex"
-                      value={formData.sex}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      {(SEX_OPTIONS[formData.species as AnimalSpecies] || SEX_OPTIONS.other).map(option => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label htmlFor="dateOfBirth" className="block text-sm font-medium mb-2">
-                      Date of Birth
-                    </label>
-                    <input
-                      id="dateOfBirth"
-                      name="dateOfBirth"
-                      type="date"
-                      value={formData.dateOfBirth}
-                      onChange={handleInputChange}
-                      max={new Date().toISOString().split('T')[0]}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="color" className="block text-sm font-medium mb-2">
-                      Color
-                    </label>
-                    <input
-                      id="color"
-                      name="color"
-                      type="text"
-                      value={formData.color}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="e.g., Brown, Black & White"
-                    />
-                  </div>
-
-                  {/* Weight and Height Fields */}
-                  <div className="col-span-2">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label htmlFor="weight" className="block text-sm font-medium mb-2">
-                          Weight
-                        </label>
-                        <div className="flex space-x-3">
-                          <input
-                            id="weight"
-                            name="weight"
-                            type="number"
-                            step="0.1"
-                            value={formData.weight || ''}
-                            onChange={handleInputChange}
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Weight"
-                          />
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                          placeholder="Enter breed for your custom species..."
+                        />
+                      ) : (
+                        <>
                           <select
-                            name="weightUnit"
-                            value={formData.weightUnit}
+                            id="breed"
+                            name="breed"
+                            value={BREED_OPTIONS[formData.species as AnimalSpecies]?.includes(formData.breed || '') ? formData.breed || '' : ''}
                             onChange={handleInputChange}
-                            className="w-28 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           >
-                            {getWeightUnits(formData.species).map(unit => (
-                              <option key={unit.value} value={unit.value}>
-                                {unit.label}
+                            <option value="">Select a breed...</option>
+                            {BREED_OPTIONS[formData.species as AnimalSpecies]?.map(breed => (
+                              <option key={breed} value={breed}>
+                                {breed}
                               </option>
                             ))}
                           </select>
+                          {formData.breed === 'Other' && (
+                            <input
+                              type="text"
+                              placeholder="Enter custom breed..."
+                              value={customBreed}
+                              onChange={(e) => setCustomBreed(e.target.value)}
+                              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 mt-2"
+                            />
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label htmlFor="sex" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Sex
+                      </label>
+                      <select
+                        id="sex"
+                        name="sex"
+                        value={formData.sex}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      >
+                        {(SEX_OPTIONS[formData.species as AnimalSpecies] || SEX_OPTIONS.other).map(option => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Date of Birth
+                      </label>
+                      <input
+                        id="dateOfBirth"
+                        name="dateOfBirth"
+                        type="date"
+                        value={formData.dateOfBirth}
+                        onChange={handleInputChange}
+                        max={new Date().toISOString().split('T')[0]}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label htmlFor="color" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Color
+                      </label>
+                      <input
+                        id="color"
+                        name="color"
+                        type="text"
+                        value={formData.color}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        placeholder="e.g., Brown, Black & White"
+                      />
+                    </div>
+
+                    {/* Weight and Height Fields */}
+                    <div className="lg:col-span-2">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label htmlFor="weight" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Weight
+                          </label>
+                          <div className="flex space-x-3">
+                            <input
+                              id="weight"
+                              name="weight"
+                              type="number"
+                              step="0.1"
+                              value={formData.weight || ''}
+                              onChange={handleInputChange}
+                              className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                              placeholder="Weight"
+                            />
+                            <select
+                              name="weightUnit"
+                              value={formData.weightUnit}
+                              onChange={handleInputChange}
+                              className="w-28 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            >
+                              {getWeightUnits(formData.species).map(unit => (
+                                <option key={unit.value} value={unit.value}>
+                                  {unit.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
-                      </div>
 
-                      <div>
-                        <label htmlFor="height" className="block text-sm font-medium mb-2">
-                          Height
-                        </label>
-                        <div className="flex space-x-3">
-                          <input
-                            id="height"
-                            name="height"
-                            type="number"
-                            step="0.1"
-                            value={formData.height || ''}
-                            onChange={handleInputChange}
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Height"
-                          />
-                          <select
-                            name="heightUnit"
-                            value={formData.heightUnit}
-                            onChange={handleInputChange}
-                            className="w-28 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                          >
-                            {getHeightUnits(formData.species).map(unit => (
-                              <option key={unit.value} value={unit.value}>
-                                {unit.label}
-                              </option>
-                            ))}
-                          </select>
+                        <div className="space-y-2">
+                          <label htmlFor="height" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Height
+                          </label>
+                          <div className="flex space-x-3">
+                            <input
+                              id="height"
+                              name="height"
+                              type="number"
+                              step="0.1"
+                              value={formData.height || ''}
+                              onChange={handleInputChange}
+                              className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                              placeholder="Height"
+                            />
+                            <select
+                              name="heightUnit"
+                              value={formData.heightUnit}
+                              onChange={handleInputChange}
+                              className="w-28 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            >
+                              {getHeightUnits(formData.species).map(unit => (
+                                <option key={unit.value} value={unit.value}>
+                                  {unit.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
                       </div>
                     </div>
+
+                    <div className="space-y-2">
+                      <label htmlFor="microchipNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Microchip Number
+                      </label>
+                      <input
+                        id="microchipNumber"
+                        name="microchipNumber"
+                        type="text"
+                        value={formData.microchipNumber}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        placeholder="15-digit number"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label htmlFor="registrationNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Registration Number
+                      </label>
+                      <input
+                        id="registrationNumber"
+                        name="registrationNumber"
+                        type="text"
+                        value={formData.registrationNumber}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        placeholder="Breed registry number"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Information */}
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Additional Information</h3>
                   </div>
 
-                  <div>
-                    <label htmlFor="microchipNumber" className="block text-sm font-medium mb-2">
-                      Microchip Number
-                    </label>
-                    <input
-                      id="microchipNumber"
-                      name="microchipNumber"
-                      type="text"
-                      value={formData.microchipNumber}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="15-digit number"
-                    />
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Profile Picture
+                      </label>
+                      <ImageUpload
+                        currentImageUrl={formData.profilePicture}
+                        onImageUpload={handleImageUpload}
+                        onImageRemove={handleImageRemove}
+                        userId={user?.uid || ''}
+                        animalId="new"
+                        disabled={loading}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label htmlFor="markings" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Markings & Distinctive Features
+                      </label>
+                      <textarea
+                        id="markings"
+                        name="markings"
+                        value={formData.markings}
+                        onChange={handleInputChange}
+                        rows={3}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        placeholder="Describe any distinctive markings, scars, or features..."
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Additional Notes
+                      </label>
+                      <textarea
+                        id="notes"
+                        name="notes"
+                        value={formData.notes}
+                        onChange={handleInputChange}
+                        rows={3}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        placeholder="Any additional information about this animal..."
+                      />
+                    </div>
                   </div>
-
-                  <div>
-                    <label htmlFor="registrationNumber" className="block text-sm font-medium mb-2">
-                      Registration Number
-                    </label>
-                    <input
-                      id="registrationNumber"
-                      name="registrationNumber"
-                      type="text"
-                      value={formData.registrationNumber}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Breed registry number"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Additional Information */}
-              <div className="space-y-6">
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-6">Additional Information</h3>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Profile Picture
-                  </label>
-                  <ImageUpload
-                    currentImageUrl={formData.profilePicture}
-                    onImageUpload={handleImageUpload}
-                    onImageRemove={handleImageRemove}
-                    userId={user?.uid || ''}
-                    disabled={loading}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="markings" className="block text-sm font-medium mb-2">
-                    Markings & Distinctive Features
-                  </label>
-                  <textarea
-                    id="markings"
-                    name="markings"
-                    value={formData.markings}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Describe any distinctive markings, scars, or features..."
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="notes" className="block text-sm font-medium mb-2">
-                    Additional Notes
-                  </label>
-                  <textarea
-                    id="notes"
-                    name="notes"
-                    value={formData.notes}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Any additional information about this animal..."
-                  />
-                </div>
-              </div>
-
-              {/* Submit Buttons */}
-              <div className="flex gap-4 pt-6">
-                <Button 
-                  type="submit" 
-                  disabled={loading} 
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3"
-                >
-                  {loading ? 'Creating...' : 'Create Animal Profile'}
-                </Button>
-                <Link href="/animals">
-                  <Button type="button" variant="outline" className="px-6 py-3">
-                    Cancel
+                {/* Submit Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4 pt-8 border-t border-gray-200/50 dark:border-gray-700/50">
+                  <Button 
+                    type="submit" 
+                    disabled={loading} 
+                    className="flex-1 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                  >
+                    {loading ? 'Creating...' : 'Create Animal Profile'}
                   </Button>
-                </Link>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+                  <Link href="/animals">
+                    <Button type="button" variant="outline" className="px-8 py-3 rounded-xl border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                      Cancel
+                    </Button>
+                  </Link>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )
