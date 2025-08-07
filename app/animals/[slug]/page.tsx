@@ -227,7 +227,14 @@ export default function AnimalProfilePage() {
                 </div>
               </Link>
               <div className="h-6 w-px bg-gray-200 dark:bg-gray-700"></div>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{animal.name}</h1>
+              <div className="flex items-center space-x-2">
+                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{animal.name}</h1>
+                {animal.dateOfDeath && (
+                  <span className="text-sm px-2 py-1 bg-red-500/20 text-red-700 dark:text-red-300 rounded-lg font-medium">
+                    ✝ Deceased
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center space-x-3">
@@ -285,7 +292,11 @@ export default function AnimalProfilePage() {
       <main className="w-full px-6 lg:px-8 pb-12">
         
         {/* Profile Hero Card */}
-        <div className="bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl rounded-3xl border border-gray-200/50 dark:border-gray-700/50 p-8 mb-8 shadow-2xl">
+        <div className={`${
+          animal.dateOfDeath 
+            ? 'bg-gray-100/60 dark:bg-gray-800/60 border-gray-300/50 dark:border-gray-600/50' 
+            : 'bg-white/40 dark:bg-gray-900/40 border-gray-200/50 dark:border-gray-700/50'
+        } backdrop-blur-xl rounded-3xl border p-8 mb-8 shadow-2xl`}>
           <div className="flex flex-col xl:flex-row items-center xl:items-start gap-8">
             {/* Profile Image */}
             <div className="relative group">
@@ -294,13 +305,43 @@ export default function AnimalProfilePage() {
                   <img 
                     src={animal.profilePicture} 
                     alt={`${animal.name}'s profile picture`}
-                    className="w-64 h-64 xl:w-80 xl:h-80 rounded-3xl object-cover shadow-2xl ring-4 ring-white/50 dark:ring-gray-700/50 transition-transform duration-300 group-hover:scale-105"
+                    className={`w-64 h-64 xl:w-80 xl:h-80 rounded-3xl object-cover shadow-2xl ring-4 ${
+                      animal.dateOfDeath 
+                        ? 'ring-gray-400/50 dark:ring-gray-600/50 grayscale' 
+                        : 'ring-white/50 dark:ring-gray-700/50'
+                    } transition-all duration-300 group-hover:scale-105`}
                   />
-                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className={`absolute inset-0 rounded-3xl ${
+                    animal.dateOfDeath 
+                      ? 'bg-gradient-to-t from-gray-900/40 to-gray-600/20' 
+                      : 'bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100'
+                  } transition-opacity duration-300`}></div>
+                  {animal.dateOfDeath && (
+                    <div className="absolute top-4 right-4 bg-red-500/90 backdrop-blur text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
+                      ✝ Deceased
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div className="w-64 h-64 xl:w-80 xl:h-80 rounded-3xl bg-gradient-to-br from-emerald-100 via-emerald-50 to-teal-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 shadow-2xl ring-4 ring-white/50 dark:ring-gray-700/50 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-                  <Heart className="h-24 w-24 xl:h-32 xl:w-32 text-emerald-400 dark:text-gray-400" />
+                <div className={`w-64 h-64 xl:w-80 xl:h-80 rounded-3xl ${
+                  animal.dateOfDeath 
+                    ? 'bg-gradient-to-br from-gray-200 via-gray-100 to-gray-200 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 grayscale' 
+                    : 'bg-gradient-to-br from-emerald-100 via-emerald-50 to-teal-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600'
+                } shadow-2xl ring-4 ${
+                  animal.dateOfDeath 
+                    ? 'ring-gray-400/50 dark:ring-gray-600/50' 
+                    : 'ring-white/50 dark:ring-gray-700/50'
+                } flex items-center justify-center group-hover:scale-105 transition-transform duration-300`}>
+                  <Heart className={`h-24 w-24 xl:h-32 xl:w-32 ${
+                    animal.dateOfDeath 
+                      ? 'text-gray-400 dark:text-gray-600' 
+                      : 'text-emerald-400 dark:text-gray-400'
+                  }`} />
+                  {animal.dateOfDeath && (
+                    <div className="absolute top-4 right-4 bg-red-500/90 backdrop-blur text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
+                      ✝ Deceased
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -309,12 +350,26 @@ export default function AnimalProfilePage() {
             <div className="flex-1 text-center xl:text-left max-w-3xl">
               {/* Status Badges */}
               <div className="flex items-center justify-center xl:justify-start flex-wrap gap-3 mb-6">
-                <div className="flex items-center px-4 py-2 bg-gradient-to-r from-emerald-100 to-emerald-200 dark:from-emerald-900/40 dark:to-emerald-800/40 text-emerald-800 dark:text-emerald-200 rounded-2xl font-semibold shadow-lg">
+                {animal.dateOfDeath && (
+                  <div className="flex items-center px-4 py-2 bg-gradient-to-r from-red-100 to-red-200 dark:from-red-900/40 dark:to-red-800/40 text-red-800 dark:text-red-200 rounded-2xl font-semibold shadow-lg">
+                    <span className="mr-2">✝</span>
+                    Deceased
+                  </div>
+                )}
+                <div className={`flex items-center px-4 py-2 bg-gradient-to-r ${
+                  animal.dateOfDeath 
+                    ? 'from-gray-100 to-gray-200 dark:from-gray-700/40 dark:to-gray-600/40 text-gray-700 dark:text-gray-300' 
+                    : 'from-emerald-100 to-emerald-200 dark:from-emerald-900/40 dark:to-emerald-800/40 text-emerald-800 dark:text-emerald-200'
+                } rounded-2xl font-semibold shadow-lg`}>
                   <Heart className="h-4 w-4 mr-2" />
                   {animal.species.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </div>
                 {animal.breed && (
-                  <div className="flex items-center px-4 py-2 bg-gradient-to-r from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/40 text-blue-800 dark:text-blue-200 rounded-2xl font-semibold shadow-lg">
+                  <div className={`flex items-center px-4 py-2 bg-gradient-to-r ${
+                    animal.dateOfDeath 
+                      ? 'from-gray-100 to-gray-200 dark:from-gray-700/40 dark:to-gray-600/40 text-gray-700 dark:text-gray-300' 
+                      : 'from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/40 text-blue-800 dark:text-blue-200'
+                  } rounded-2xl font-semibold shadow-lg`}>
                     <Tag className="h-4 w-4 mr-2" />
                     {animal.breed}
                   </div>
